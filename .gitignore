@@ -180,3 +180,4 @@ fabric.properties
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/androidstudio,android,cmake
+libraries/tf_test2/tensorflow_src/
