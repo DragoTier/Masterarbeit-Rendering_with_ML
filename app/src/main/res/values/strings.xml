@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/*
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License"); 
+** you may not use this file except in compliance with the License. 
+** You may obtain a copy of the License at 
+**
+**     http://www.apache.org/licenses/LICENSE-2.0 
+**
+** Unless required by applicable law or agreed to in writing, software 
+** distributed under the License is distributed on an "AS IS" BASIS, 
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+** See the License for the specific language governing permissions and 
+** limitations under the License.
+*/
+-->
+
+<!-- This file contains resource definitions for displayed strings, allowing
+     them to be changed based on the locale and options. -->
+
+<resources>
+    <!-- Simple strings. -->
+    <string name="gl2jni_activity">GL2JNI</string>
+    <string name="app_name" translatable="false">TFL Super Resolution</string>
+    <string name="choose_image" translatable="false">Choose a low resolution image below:</string>
+    <string name="low_resolution_1" translatable="false">insect head</string>
+    <string name="low_resolution_2" translatable="false">lights</string>
+    <string name="low_resolution_3" translatable="false">cat ear</string>
+    <string name="chosen_image_text" translatable="false">You are using low resolution image: None.</string>
+    <string name="simple_explanation" translatable="false">(Clicking UPSAMPLE button below will use TFLite to generate a corresponding high resolution image based on your chosen image.)</string>
+    <string name="super_resolution_image" translatable="false">Super resolution image:</string>
+    <string name="natively_scaled_image" translatable="false">Android ImageView-scaled image:</string>
+    <string name="upsample" translatable="false">Upsample</string>
+    <string name="gpu" translatable="false">GPU</string>
+</resources>
+
