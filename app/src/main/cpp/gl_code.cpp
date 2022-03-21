@@ -289,10 +289,10 @@ std::unique_ptr<int[]> doSuperResolution(){
    // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
    //       ->DoSuperResolutionCNN(pixels);
 
-    FILE* pFile2;
+   /* FILE* pFile2;
     pFile2 = fopen("/data/data/com.android.gl2jni/buffer_file_3.data", "wb");
     fwrite(&srImgInt[0], 1, 200*200*4, pFile2);
-    fclose(pFile2);
+    fclose(pFile2); */
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -371,8 +371,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHan
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
     auto img = doSuperResolution();
-    jintArray sr_img_rgb = env->NewIntArray(107*3*160 * 3);
-    env->SetIntArrayRegion(sr_img_rgb, 0, 107*3*160 * 3,
+    jintArray sr_img_rgb = env->NewIntArray(width*3* height*3);
+    env->SetIntArrayRegion(sr_img_rgb, 0, width*3 * height*3,
                            img.get());
 
     return sr_img_rgb;

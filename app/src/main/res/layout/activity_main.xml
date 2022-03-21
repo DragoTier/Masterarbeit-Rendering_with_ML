@@ -11,8 +11,8 @@
 
     <android.opengl.GLSurfaceView
         android:id="@+id/viewTest"
-        android:layout_width="160px"
-        android:layout_height="107px"
+        android:layout_width="360px"
+        android:layout_height="640px"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="300px"
         android:visibility="visible"
@@ -20,8 +20,8 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="480px"
-        android:layout_height="321px"
+        android:layout_width="1080px"
+        android:layout_height="1920px"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="145dp"
