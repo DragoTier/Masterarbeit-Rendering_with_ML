@@ -39,9 +39,9 @@ namespace tflite {
 namespace examples {
 namespace superresolution {
 
-const int kInputImageHeight = 100;
-const int kInputImageWidth = 100;
-const int kImageChannels = 3;
+const int kInputImageHeight = 107;
+const int kInputImageWidth = 160;
+const int kImageChannels = 1;
 const int kNumberOfInputPixels = kInputImageHeight * kInputImageWidth;
 const int kUpscaleFactor = 3;
 const int kOutputImageHeight = kInputImageHeight * kUpscaleFactor;

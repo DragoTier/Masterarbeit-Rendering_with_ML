@@ -278,8 +278,14 @@ std::unique_ptr<int[]> doSuperResolution(){
     fclose(pFile);
 
     LOGI("SUPERRESOLUTION ABOUT TO START");
-    std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
-           ->DoSuperResolution((int*)pixels);
+    LOGI("SuperRes native handle: %dl", super_resolution_native_handle);
+    tflite::examples::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle);
+    if(superRes == nullptr){
+        LOGE("super res handle is nullptr");
+    }
+    std::unique_ptr<int[]> srImgInt = nullptr; //superRes->DoSuperResolution((int*)pixels);
+    //std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
+    //       ->DoSuperResolution((int*)pixels);
    // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
    //       ->DoSuperResolutionCNN(pixels);
 
@@ -365,8 +371,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHan
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
     auto img = doSuperResolution();
-    jintArray sr_img_rgb = env->NewIntArray(200*200);
-    env->SetIntArrayRegion(sr_img_rgb, 0, 200*200,
+    jintArray sr_img_rgb = env->NewIntArray(107*3*160 * 3);
+    env->SetIntArrayRegion(sr_img_rgb, 0, 107*3*160 * 3,
                            img.get());
 
     return sr_img_rgb;
