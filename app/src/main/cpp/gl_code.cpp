@@ -283,7 +283,7 @@ std::unique_ptr<int[]> doSuperResolution(){
     if(superRes == nullptr){
         LOGE("super res handle is nullptr");
     }
-    std::unique_ptr<int[]> srImgInt = nullptr; //superRes->DoSuperResolution((int*)pixels);
+    std::unique_ptr<int[]> srImgInt = superRes->DoSuperResolution((int*)pixels);
     //std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
     //       ->DoSuperResolution((int*)pixels);
    // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)

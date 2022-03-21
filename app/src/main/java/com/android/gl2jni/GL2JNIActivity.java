@@ -98,16 +98,16 @@ public class GL2JNIActivity extends AppCompatActivity {
         super.onCreate(icicle);
         setContentView(R.layout.activity_main);
 
-      //  final ImageView superResolutionImageView = findViewById(R.id.imageView);
-      //  superResolutionImageView.setImageDrawable(null);
+        final ImageView superResolutionImageView = findViewById(R.id.imageView);
+        superResolutionImageView.setImageDrawable(null);
 
         superResolutionNativeHandle = initTFLiteInterpreter(true);
         GL2JNILib.setNativeHandle(superResolutionNativeHandle);
         mView = (GLSurfaceView) findViewById(R.id.viewTest); //new GL2JNIView(getApplication());
-        mView.setEGLContextClientVersion(2);
+        mView.setEGLContextClientVersion(3);
         OpenGLRenderer renderer = new OpenGLRenderer();
 
-    /*    handler = new Handler(){
+        handler = new Handler(){
             @Override
             public void handleMessage(Message msg) {
                 Bundle bundle = msg.getData();
@@ -115,18 +115,15 @@ public class GL2JNIActivity extends AppCompatActivity {
                 Bitmap srImgBitmap = Bitmap.createBitmap(pixels, SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
                 superResolutionImageView.setImageBitmap(srImgBitmap);
             }
-        }; */
+        };
 
-      //  renderer.handler = handler;
-
+        renderer.handler = handler;
         mView.setRenderer(renderer);
-
-
         //setContentView(mView);
 
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-        Bitmap bitmap = null;
+        /*Bitmap bitmap = null;
         try{
             AssetManager assetManager = getAssets();
             InputStream inputStream = assetManager.open(LR_IMG_1);
@@ -147,7 +144,7 @@ public class GL2JNIActivity extends AppCompatActivity {
         Bitmap srImgBitmap = Bitmap.createBitmap(superResRGB, SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
         final ImageView superResolutionImageView = findViewById(R.id.imageView);
         superResolutionImageView.setImageDrawable(null);
-        superResolutionImageView.setImageBitmap(srImgBitmap);
+        superResolutionImageView.setImageBitmap(srImgBitmap); */
     }
 
     @Override
