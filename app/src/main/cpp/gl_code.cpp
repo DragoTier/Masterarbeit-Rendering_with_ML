@@ -45,8 +45,8 @@
 
 long super_resolution_native_handle;
 std::unique_ptr<int[]> srImg;
-uint8_t width;
-uint8_t height;
+int width;
+int height;
 
 static void printGLString(const char *name, GLenum s) {
     const char *v = (const char *) glGetString(s);
@@ -277,13 +277,22 @@ std::unique_ptr<int[]> doSuperResolution(){
     fwrite(pixels, 1, width*height*4, pFile);
     fclose(pFile);
 
-    LOGI("SUPERRESOLUTION ABOUT TO START");
     LOGI("SuperRes native handle: %dl", super_resolution_native_handle);
     tflite::examples::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle);
     if(superRes == nullptr){
         LOGE("super res handle is nullptr");
     }
-    std::unique_ptr<int[]> srImgInt = superRes->DoSuperResolution((int*)pixels);
+    if(superRes->isResponding()){
+        LOGI("IS RESPONDING");
+    }
+    for(int i = 0; i< width*height*4; i++){
+        if(pixels[i] != 0){
+              LOGI("pixels %i: %i",i , pixels[i]);
+        }
+    }
+    int* pixelPointer = (int*)pixels;
+    LOGI("SUPERRESOLUTION ABOUT TO START");
+    std::unique_ptr<int[]> srImgInt = superRes->DoSuperResolution(pixelPointer);
     //std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
     //       ->DoSuperResolution((int*)pixels);
    // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)

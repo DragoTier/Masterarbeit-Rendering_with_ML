@@ -1,5 +1,6 @@
 package com.android.gl2jni;
 
+import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
 
 import android.os.Bundle;
@@ -21,6 +22,11 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+
+    }
+
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GL2JNILib.init(width, height);
 
         int[] img = GL2JNILib.getSuperResImg();
@@ -29,11 +35,6 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         bundle.putIntArray("pixels", img);
         msg.setData(bundle);
         handler.sendMessage(msg);
-    }
-
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        // Do nothing.
     }
 
 

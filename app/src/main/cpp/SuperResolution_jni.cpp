@@ -55,13 +55,10 @@ Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(
 }
 
 extern "C" JNIEXPORT jlong
-Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI(
-    JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
-  const void *model_data =
-      static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
+Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI( JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
+  const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
   jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
-  SuperResolution *super_resolution = new SuperResolution(
-      model_data, static_cast<size_t>(model_size_bytes), use_gpu);
+  SuperResolution *super_resolution = new SuperResolution( model_data, static_cast<size_t>(model_size_bytes), use_gpu);
   if (super_resolution->IsInterpreterCreated()) {
     LOGI("Interpreter is created successfully");
 
@@ -73,8 +70,7 @@ Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_android_gl2jni_GL2JNIActivity_deinitFromJNI(
-    JNIEnv *env, jobject thiz, jlong native_handle) {
+Java_com_android_gl2jni_GL2JNIActivity_deinitFromJNI( JNIEnv *env, jobject thiz, jlong native_handle) {
   delete reinterpret_cast<SuperResolution*>(native_handle);
 }
 

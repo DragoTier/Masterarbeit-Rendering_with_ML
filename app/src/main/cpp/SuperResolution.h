@@ -39,8 +39,8 @@ namespace tflite {
 namespace examples {
 namespace superresolution {
 
-const int kInputImageHeight = 640;
-const int kInputImageWidth = 360;
+const int kInputImageHeight = 154;
+const int kInputImageWidth = 154;
 const int kImageChannels = 1;
 const int kNumberOfInputPixels = kInputImageHeight * kInputImageWidth;
 const int kUpscaleFactor = 3;
@@ -61,6 +61,7 @@ class SuperResolution {
 
     std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
     std::unique_ptr<int[]> DoSuperResolutionCNN(float *lr_img_rgb);
+    bool isResponding();
 
   private:
     // TODO: use unique_ptr

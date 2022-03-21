@@ -70,8 +70,8 @@ public class GL2JNIActivity extends AppCompatActivity {
     private static final String MODEL_NAME = "model_from_h5.tflite";
 
     //private static final String MODEL_NAME = "super-Resolution_converted.tflite";
-    private static final int LR_IMAGE_HEIGHT = 107;
-    private static final int LR_IMAGE_WIDTH = 160;
+    private static final int LR_IMAGE_HEIGHT = 154;
+    private static final int LR_IMAGE_WIDTH = 154;
     private static final int UPSCALE_FACTOR = 3;
     private static final int SR_IMAGE_HEIGHT = LR_IMAGE_HEIGHT * UPSCALE_FACTOR;
     private static final int SR_IMAGE_WIDTH = LR_IMAGE_WIDTH * UPSCALE_FACTOR;
@@ -92,8 +92,6 @@ public class GL2JNIActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 111111111;
 
-    private Handler handler;
-
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.activity_main);
@@ -107,17 +105,7 @@ public class GL2JNIActivity extends AppCompatActivity {
         mView.setEGLContextClientVersion(3);
         OpenGLRenderer renderer = new OpenGLRenderer();
 
-        handler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                Bundle bundle = msg.getData();
-                int[] pixels = bundle.getIntArray("pixels");
-                Bitmap srImgBitmap = Bitmap.createBitmap(pixels, SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
-                superResolutionImageView.setImageBitmap(srImgBitmap);
-            }
-        };
-
-        renderer.handler = handler;
+        renderer.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
         mView.setRenderer(renderer);
         //setContentView(mView);
 

@@ -87,6 +87,11 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
         return;
     }
     TfLiteInterpreterResizeInputTensor(interpreter_, 0, CONST_DIMS, 4);
+    status = TfLiteInterpreterAllocateTensors(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when allocating tensors");
+        return;
+    }
 }
 
 SuperResolution::~SuperResolution() {
@@ -120,10 +125,16 @@ int64_t getTimeNsec() {
 }
 int counter = 0;
 
+bool SuperResolution::isResponding(){
+    int i = 5;
+    i++;
+    return true;
+}
+
 std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
 
     LOGI("SUPERRESOLUTION METHOD STARTED");
-    counter++;
+
 
     // Allocate tensors and populate the input tensor data
     TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
