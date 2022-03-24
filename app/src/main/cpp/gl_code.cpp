@@ -257,7 +257,7 @@ void dumpBuffer(){
 }
 
 std::unique_ptr<int[]> doSuperResolution(){
-    if (!reinterpret_cast<tflite::examples::superresolution::SuperResolution *>(super_resolution_native_handle)
+    if (!reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->IsInterpreterCreated()) {
         return nullptr;
     }
@@ -279,7 +279,7 @@ std::unique_ptr<int[]> doSuperResolution(){
 
     LOGI("SUPERRESOLUTION ABOUT TO START");
     LOGI("SuperRes native handle: %dl", super_resolution_native_handle);
-    tflite::examples::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle);
+    tflite::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::superresolution::SuperResolution*> (super_resolution_native_handle);
     if(superRes == nullptr){
         LOGE("super res handle is nullptr");
     }
@@ -300,19 +300,17 @@ std::unique_ptr<int[]> doSuperResolution(){
 }
 
 std::unique_ptr<int[]> doSuperResolutionHardwareBuffer(){
-    if (!reinterpret_cast<tflite::examples::superresolution::SuperResolution *>(super_resolution_native_handle)
+    if (!reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->IsInterpreterCreated()) {
         return nullptr;
     }
 
     // Generate super resolution image
-    auto srImgyo =  reinterpret_cast<tflite::examples::superresolution::SuperResolution *>(super_resolution_native_handle)
+    auto srImgyo =  reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->DoSuperResolution(&hardware_buffer);
 
     return srImgyo;
 }
-
-
 
 void renderFrame() {
 
@@ -355,13 +353,13 @@ extern "C" {
 
 extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj,  jint width, jint height)
 {
-    setupGraphics(width, height);
-    renderFrame();
+  //  setupGraphics(width, height);
+  //  renderFrame();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv * env, jclass obj)
 {
-    renderFrame();
+ //   renderFrame();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle){
@@ -370,12 +368,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHan
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
-    auto img = doSuperResolution();
+ /*   auto img = doSuperResolution();
     jintArray sr_img_rgb = env->NewIntArray(107*3*160 * 3);
     env->SetIntArrayRegion(sr_img_rgb, 0, 107*3*160 * 3,
                            img.get());
 
-    return sr_img_rgb;
+    return sr_img_rgb; */
 }
 
 

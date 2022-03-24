@@ -28,20 +28,25 @@
 #include <vector>
 #include <tensorflow/lite/interpreter.h>
 #include <tensorflow/lite/c/c_api_internal.h>
+#include <tensorflow/lite/kernels/register.h>
+#include <android/asset_manager.h>
 
 
 namespace tflite {
-namespace examples {
 namespace superresolution {
 
 constexpr int kThreadNum = 4;
 const NnApi* nnapi_object;
 StatefulNnApiDelegate* delegate;
 
-SuperResolution::SuperResolution(const void* model_data, size_t model_size,
-                                 bool use_nnapi) {
+SuperResolution::SuperResolution() {
+
+}
+SuperResolution::SuperResolution(const void* model_data, size_t model_size, bool use_nnapi) {
     // Load the model
     //model_ = null;
+    //AAsset* assetDir = AAssetManager_openDir()
+    //model_ = TfLiteModelCreateFromFile("./assets/model_from_h5.tflite");
     model_ = TfLiteModelCreate(model_data, model_size);
     if (!model_) {
         LOGE("Failed to create TFLite model");
@@ -75,18 +80,9 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
         return;
     }
 
-    int inputCount = TfLiteInterpreterGetInputTensorCount(interpreter_);
-    LOGI("Input count %i", inputCount);
-    int inputDims[4] = {1, kInputImageHeight, kInputImageWidth, kImageChannels};
-    //memset(inputDims, 0, sizeof(float)* kNumberOfInputPixels);
-    const int * CONST_DIMS = inputDims;
-    LOGI("fk size %d", sizeof(CONST_DIMS));
-    TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when allocating tensors");
-        return;
-    }
-    TfLiteInterpreterResizeInputTensor(interpreter_, 0, CONST_DIMS, 4);
+
+
+
 }
 
 SuperResolution::~SuperResolution() {
@@ -120,17 +116,23 @@ int64_t getTimeNsec() {
 }
 int counter = 0;
 
-std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
+std::unique_ptr<int[]> SuperResolution::DoSuperResolution(const int* lr_img_rgb) {
 
-    LOGI("SUPERRESOLUTION METHOD STARTED");
-    counter++;
+    //LOGI("SUPERRESOLUTION METHOD STARTED");
+   // counter++;
 
-    // Allocate tensors and populate the input tensor data
+    int inputCount = TfLiteInterpreterGetInputTensorCount(interpreter_);
+    LOGI("Input count %i", inputCount);
+    int inputDims[4] = {1, kInputImageHeight, kInputImageWidth, kImageChannels};
+    //memset(inputDims, 0, sizeof(float)* kNumberOfInputPixels);
+    const int * CONST_DIMS = inputDims;
+    LOGI("fk size %d", sizeof(CONST_DIMS));
     TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
     if (status != kTfLiteOk) {
         LOGE("Something went wrong when allocating tensors");
         return nullptr;
     }
+    TfLiteInterpreterResizeInputTensor(interpreter_, 0, CONST_DIMS, 4);
 
     int input = interpreter_->impl->inputs()[0];
     auto batch_size = interpreter_->impl->tensor(input)->dims->data[0];
@@ -138,8 +140,19 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
     auto width = interpreter_->impl->tensor(input)->dims->data[2];
     auto channels = interpreter_->impl->tensor(input)->dims->data[3];
 
+    int output = interpreter_->impl->outputs()[0];
+    auto outputHeight = interpreter_->impl->output_tensor(0)->dims->data[1];
+    auto outputWidth = interpreter_->impl->output_tensor(0)->dims->data[2];
+    auto outputChannels = interpreter_->impl->output_tensor(0)->dims->data[3];
 
+    // Allocate tensors and populate the input tensor data
+    status = TfLiteInterpreterAllocateTensors(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when allocating tensors");
+        return nullptr;
+    }
 
+    input = interpreter_->impl->inputs()[0];
     TfLiteTensor* input_tensor =
       TfLiteInterpreterGetInputTensor(interpreter_, input);
 
@@ -357,5 +370,4 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(AHardwareBuffer** hard
 }
 
 }  // namespace superresolution
-}  // namespace examples
 }  // namespace tflite

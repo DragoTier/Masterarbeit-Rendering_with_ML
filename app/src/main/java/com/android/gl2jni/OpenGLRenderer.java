@@ -23,12 +23,12 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GL2JNILib.init(width, height);
 
-        int[] img = GL2JNILib.getSuperResImg();
+     /*   int[] img = GL2JNILib.getSuperResImg();
         Message msg = handler.obtainMessage();
         Bundle bundle = new Bundle();
         bundle.putIntArray("pixels", img);
         msg.setData(bundle);
-        handler.sendMessage(msg);
+        handler.sendMessage(msg); */
     }
 
     @Override

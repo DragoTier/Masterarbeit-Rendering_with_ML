@@ -24,44 +24,14 @@
 
 #include "SuperResolution.h"
 
-namespace tflite {
-namespace examples {
-namespace superresolution {
-
-extern "C" JNIEXPORT jintArray
-Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(
-    JNIEnv *env, jobject thiz, jlong native_handle, jintArray low_res_rgb) {
-  jint *lr_img_rgb = env->GetIntArrayElements(low_res_rgb, NULL);
-
-  if (!reinterpret_cast<SuperResolution *>(native_handle)
-           ->IsInterpreterCreated()) {
-    return nullptr;
-  }
-
-  // Generate super resolution image
-  auto sr_rgb_colors = reinterpret_cast<SuperResolution *>(native_handle)
-                           ->DoSuperResolution(static_cast<int *>(lr_img_rgb));
-  if (!sr_rgb_colors) {
-    return nullptr;  // super resolution failed
-  }
-  jintArray sr_img_rgb = env->NewIntArray(kNumberOfOutputPixels);
-  env->SetIntArrayRegion(sr_img_rgb, 0, kNumberOfOutputPixels,
-                         sr_rgb_colors.get());
-
-  // Clean up before we return
-  env->ReleaseIntArrayElements(low_res_rgb, lr_img_rgb, JNI_COMMIT);
-
-  return sr_img_rgb;
-}
 
 extern "C" JNIEXPORT jlong
 Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI(
-    JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
-  const void *model_data =
-      static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
+        JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
+  const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
   jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
-  SuperResolution *super_resolution = new SuperResolution(
-      model_data, static_cast<size_t>(model_size_bytes), use_gpu);
+  tflite::superresolution::SuperResolution *super_resolution = new tflite::superresolution::SuperResolution(
+          model_data, static_cast<size_t>(model_size_bytes), use_gpu);
   if (super_resolution->IsInterpreterCreated()) {
     LOGI("Interpreter is created successfully");
 
@@ -72,12 +42,39 @@ Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI(
   }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_android_gl2jni_GL2JNIActivity_deinitFromJNI(
-    JNIEnv *env, jobject thiz, jlong native_handle) {
-  delete reinterpret_cast<SuperResolution*>(native_handle);
+extern "C" JNIEXPORT jintArray
+Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(JNIEnv *env, jobject thiz, jobject model_buffer, jintArray low_res_rgb) {
+
+    const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
+    jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
+
+    jboolean jbool = JNI_TRUE;
+    jint *lr_img_rgb = env->GetIntArrayElements(low_res_rgb, &jbool);
+
+    tflite::superresolution::SuperResolution *super_resolution = new tflite::superresolution::SuperResolution(model_data, static_cast<size_t>(model_size_bytes), true);
+    TfLiteTensor* tensor = TfLiteInterpreterGetInputTensor(super_resolution->interpreter_,0);
+
+    if (super_resolution->IsInterpreterCreated()) {
+        LOGI("Interpreter is created successfully");
+    }
+
+    // Generate super resolution image
+    auto sr_rgb_colors = super_resolution->DoSuperResolution(static_cast<int *>(lr_img_rgb));
+    if (!sr_rgb_colors) {
+    return nullptr;  // super resolution failed
+    }
+    jintArray sr_img_rgb = env->NewIntArray(tflite::superresolution::kNumberOfOutputPixels);
+    env->SetIntArrayRegion(sr_img_rgb, 0, tflite::superresolution::kNumberOfOutputPixels,
+                         sr_rgb_colors.get());
+    // Clean up before we return
+    env->ReleaseIntArrayElements(low_res_rgb, lr_img_rgb, JNI_COMMIT);
+
+    return sr_img_rgb;
 }
 
-}  // namespace superresolution
-}  // namespace examples
-}  // namespace tflite
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_android_gl2jni_GL2JNIActivity_deinitFromJNI(JNIEnv *env, jobject thiz, jlong native_handle) {
+  delete reinterpret_cast<tflite::superresolution::SuperResolution*>(native_handle);
+}
