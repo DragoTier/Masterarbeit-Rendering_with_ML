@@ -283,34 +283,35 @@ std::unique_ptr<int[]> doSuperResolution(){
     if(superRes == nullptr){
         LOGE("super res handle is nullptr");
     }
-    std::unique_ptr<int[]> srImgInt = superRes->DoSuperResolution((int*)pixels);
+    std::unique_ptr<int> srImgInt = superRes->DoSuperResolution((int*)pixels);
     //std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
     //       ->DoSuperResolution((int*)pixels);
    // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
    //       ->DoSuperResolutionCNN(pixels);
+    return nullptr;
 
-    FILE* pFile2;
+  /*  FILE* pFile2;
     pFile2 = fopen("/data/data/com.android.gl2jni/buffer_file_3.data", "wb");
-    fwrite(&srImgInt[0], 1, 200*200*4, pFile2);
+    fwrite(&srImgInt.get()[0], 1, 200*200*4, pFile2);
     fclose(pFile2);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    return srImgInt;
+    return srImgInt; */
 }
 
-std::unique_ptr<int[]> doSuperResolutionHardwareBuffer(){
+/*std::unique_ptr<int[]> doSuperResolutionHardwareBuffer(){
     if (!reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->IsInterpreterCreated()) {
         return nullptr;
     }
 
     // Generate super resolution image
-    auto srImgyo =  reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
-            ->DoSuperResolution(&hardware_buffer);
+   // auto srImgyo =  reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
+   //         ->DoSuperResolution(&hardware_buffer);
 
     return srImgyo;
-}
+} */
 
 void renderFrame() {
 

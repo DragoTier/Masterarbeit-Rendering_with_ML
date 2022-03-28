@@ -20,10 +20,9 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="480px"
-        android:layout_height="321px"
+        android:layout_width="1080px"
+        android:layout_height="1920px"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
         android:layout_marginBottom="145dp"
         android:src="@drawable/ic_launcher"
         android:visibility="visible"

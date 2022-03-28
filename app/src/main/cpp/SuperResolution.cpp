@@ -80,9 +80,6 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size, bool
         return;
     }
 
-
-
-
 }
 
 SuperResolution::~SuperResolution() {
@@ -116,10 +113,122 @@ int64_t getTimeNsec() {
 }
 int counter = 0;
 
-std::unique_ptr<int[]> SuperResolution::DoSuperResolution(const int* lr_img_rgb) {
+int* SuperResolution::DoSuperResolution2(const int* lr_img_rgb) {
+
+
+    int inputCount = TfLiteInterpreterGetInputTensorCount(interpreter_);
+
+    LOGI("Input count %i", inputCount);
+    int inputDims[4] = {1, kInputImageHeight, kInputImageWidth, kImageChannels};
+
+    //LOGI("fk size %d", sizeof(CONST_DIMS));
+    TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when allocating tensors");
+        return nullptr;
+    }
+
+    status = TfLiteInterpreterResizeInputTensor(interpreter_, 0, inputDims, 4);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when allocating tensors");
+        return nullptr;
+    }
+
+    int input = interpreter_->impl->inputs()[0];
+    auto batch_size = interpreter_->impl->tensor(input)->dims->data[0];
+    auto height = interpreter_->impl->tensor(input)->dims->data[1];
+    auto width = interpreter_->impl->tensor(input)->dims->data[2];
+    auto channels = interpreter_->impl->tensor(input)->dims->data[3];
+
+    int output = interpreter_->impl->outputs()[0];
+    auto outputHeight = interpreter_->impl->output_tensor(0)->dims->data[1];
+    auto outputWidth = interpreter_->impl->output_tensor(0)->dims->data[2];
+    auto outputChannels = interpreter_->impl->output_tensor(0)->dims->data[3];
+
+    // Allocate tensors and populate the input tensor data
+    status = TfLiteInterpreterAllocateTensors(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when allocating tensors");
+        return nullptr;
+    }
+    input = interpreter_->impl->inputs()[0];
+    TfLiteTensor* input_tensor =
+            TfLiteInterpreterGetInputTensor(interpreter_, input);
+
+
+    // Extract RGB values from each pixel kNumberOfInputPixels * kImageChannels
+    float* input_buffer = new float[kNumberOfInputPixels * kImageChannels];
+    for (int i = 0, j = 0; i < kNumberOfInputPixels; i++) {
+        // Alpha is ignored
+
+        input_buffer[j++] = static_cast<float>((lr_img_rgb[i] >> 16) & 0xff);
+        //input_buffer[j++] = static_cast<float>((lr_img_rgb[i] >> 16) & 0xff);
+        //input_buffer[j++] = static_cast<float>((lr_img_rgb[i] >> 8) & 0xff);
+        // LOGI("Input value: %f", input_buffer[j]);
+    }
+
+    //LOGI("Length of input buffer: %d", (sizeof(input_buffer)/sizeof(*input_buffer)));
+
+
+    // Feed input into model
+    //status = TfLiteTensorCopyFromBuffer(input_tensor, input_buffer, kNumberOfInputPixels * kImageChannels * sizeof(float));
+
+    status = TfLiteTensorCopyFromBuffer(
+            input_tensor, input_buffer,kInputImageHeight * kInputImageWidth * sizeof(float));
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when copying input buffer to input tensor");
+        return nullptr;
+    }
+    int64_t startTime = getTimeNsec();
+
+    // Run the interpreter
+    status = TfLiteInterpreterInvoke(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when running the TFLite model");
+        return nullptr;
+    }
+
+    // Extract the output tensor data
+    const TfLiteTensor* output_tensor =
+            TfLiteInterpreterGetOutputTensor(interpreter_, 0);
+    float* output_buffer = new float[kNumberOfOutputPixels * kImageChannels];
+    status = TfLiteTensorCopyToBuffer(
+            output_tensor, output_buffer,
+            kOutputImageHeight * kOutputImageWidth * sizeof(float));
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when copying output tensor to output buffer");
+        return nullptr;
+    }
+    //deallocate input buffer
+    delete[] input_buffer;
+
+    int64_t endTime = getTimeNsec() - startTime;
+
+    // Postprocess the output from TFLite
+    int clipped_output[kImageChannels];
+    int* rgb_colors = new int[kNumberOfOutputPixels];
+    //rgb_colors->reserve(kNumberOfOutputPixels * kImageChannels);
+    for (int i = 0; i < kNumberOfOutputPixels; i++) {
+        for (int j = 0; j < kImageChannels; j++) {
+            clipped_output[j] = std::max<float>(0, std::min<float>(255, output_buffer[i * kImageChannels + j]));
+        }
+        // When we have RGB values, we pack them into a single pixel.
+        // Alpha is set to 255.
+        rgb_colors[i] = (255u & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 | (clipped_output[0] & 0xff) | (clipped_output[0] & 0xff) << 16;
+        //LOGI("color value: %d", rgb_colors[i]);
+    }
+    delete[] output_buffer;
+
+    LOGI("SuperResolution Time: %f ms", static_cast<float>(endTime)/1000000);
+
+    return rgb_colors;
+
+}
+std::unique_ptr<int> SuperResolution::DoSuperResolution(const int* lr_img_rgb) {
 
     //LOGI("SUPERRESOLUTION METHOD STARTED");
    // counter++;
+
 
     int inputCount = TfLiteInterpreterGetInputTensorCount(interpreter_);
     LOGI("Input count %i", inputCount);
@@ -219,74 +328,75 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(const int* lr_img_rgb)
     LOGI("Invoked count: %i", counter);
     LOGI("SuperResolution Time: %f ms", static_cast<float>(endTime)/1000000);
 
-    return rgb_colors;
+    return nullptr;//return rgb_colors;
+
 }
 
-    std::unique_ptr<int[]> SuperResolution::DoSuperResolutionCNN(float* lr_img_r) {
+std::unique_ptr<int[]> SuperResolution::DoSuperResolutionCNN(float* lr_img_r) {
 
 
-        counter++;
-        // Allocate tensors and populate the input tensor data
-        TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
-        if (status != kTfLiteOk) {
-            LOGE("Something went wrong when allocating tensors");
-            return nullptr;
-        }
-
-        TfLiteTensor* input_tensor =
-                TfLiteInterpreterGetInputTensor(interpreter_, 0);
-
-
-        // Feed input into model
-        status = TfLiteTensorCopyFromBuffer(
-                input_tensor, lr_img_r,
-                224*244 * sizeof(float));
-        if (status != kTfLiteOk) {
-            LOGE("Something went wrong when copying input buffer to input tensor");
-            return nullptr;
-        }
-        int64_t startTime = getTimeNsec();
-        // Run the interpreter
-        status = TfLiteInterpreterInvoke(interpreter_);
-        if (status != kTfLiteOk) {
-            LOGE("Something went wrong when running the TFLite model");
-            return nullptr;
-        }
-
-        // Extract the output tensor data
-        const TfLiteTensor* output_tensor =
-                TfLiteInterpreterGetOutputTensor(interpreter_, 0);
-        float output_buffer[672*672];
-        status = TfLiteTensorCopyToBuffer(
-                output_tensor, output_buffer,
-                672*672 * sizeof(float));
-        if (status != kTfLiteOk) {
-            LOGE("Something went wrong when copying output tensor to output buffer");
-            return nullptr;
-        }
-        int64_t endTime = getTimeNsec() - startTime;
-
-        // Postprocess the output from TFLite
-      /*  int clipped_output[kImageChannels];
-        auto rgb_colors = std::make_unique<int[]>(kNumberOfOutputPixels);
-        for (int i = 0; i < kNumberOfOutputPixels; i++) {
-            for (int j = 0; j < kImageChannels; j++) {
-                clipped_output[j] = std::max<float>(
-                        0, std::min<float>(255, output_buffer[i * kImageChannels + j]));
-            }
-            // When we have RGB values, we pack them into a single pixel.
-            // Alpha is set to 255.
-            rgb_colors[i] = (255u & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 |
-                            (clipped_output[1] & 0xff) |
-                            (clipped_output[2] & 0xff) << 16;
-        } */
-
-        LOGI("Invoked count: %i", counter);
-        LOGI("SuperResolution Time: %ld", endTime);
-
+    counter++;
+    // Allocate tensors and populate the input tensor data
+    TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when allocating tensors");
         return nullptr;
     }
 
+    TfLiteTensor* input_tensor =
+            TfLiteInterpreterGetInputTensor(interpreter_, 0);
+
+
+    // Feed input into model
+    status = TfLiteTensorCopyFromBuffer(
+            input_tensor, lr_img_r,
+            224*244 * sizeof(float));
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when copying input buffer to input tensor");
+        return nullptr;
+    }
+    int64_t startTime = getTimeNsec();
+    // Run the interpreter
+    status = TfLiteInterpreterInvoke(interpreter_);
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when running the TFLite model");
+        return nullptr;
+    }
+
+    // Extract the output tensor data
+    const TfLiteTensor* output_tensor =
+            TfLiteInterpreterGetOutputTensor(interpreter_, 0);
+    float output_buffer[672*672];
+    status = TfLiteTensorCopyToBuffer(
+            output_tensor, output_buffer,
+            672*672 * sizeof(float));
+    if (status != kTfLiteOk) {
+        LOGE("Something went wrong when copying output tensor to output buffer");
+        return nullptr;
+    }
+    int64_t endTime = getTimeNsec() - startTime;
+
+    // Postprocess the output from TFLite
+  /*  int clipped_output[kImageChannels];
+    auto rgb_colors = std::make_unique<int[]>(kNumberOfOutputPixels);
+    for (int i = 0; i < kNumberOfOutputPixels; i++) {
+        for (int j = 0; j < kImageChannels; j++) {
+            clipped_output[j] = std::max<float>(
+                    0, std::min<float>(255, output_buffer[i * kImageChannels + j]));
+        }
+        // When we have RGB values, we pack them into a single pixel.
+        // Alpha is set to 255.
+        rgb_colors[i] = (255u & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 |
+                        (clipped_output[1] & 0xff) |
+                        (clipped_output[2] & 0xff) << 16;
+    } */
+
+    LOGI("Invoked count: %i", counter);
+    LOGI("SuperResolution Time: %ld", endTime);
+
+    return nullptr;
+}
+/*
 std::unique_ptr<int[]> SuperResolution::DoSuperResolution(AHardwareBuffer** hardwareBuffer) {
 
 
@@ -368,6 +478,6 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(AHardwareBuffer** hard
 
     return rgb_colors;
 }
-
+*/
 }  // namespace superresolution
 }  // namespace tflite

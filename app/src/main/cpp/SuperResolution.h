@@ -57,14 +57,15 @@ class SuperResolution {
     // returns a valid pointer if successful and nullptr if unsuccessful.
     // lr_img_rgb: the pointer to the RGB array extracted from low resolution
     // image
-    std::unique_ptr<int[]> DoSuperResolution(const int* lr_img_rgb);
+    std::unique_ptr<int> DoSuperResolution(const int* lr_img_rgb);
+    int* DoSuperResolution2(const int* lr_img_rgb);
 
-    std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
+    //std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
     std::unique_ptr<int[]> DoSuperResolutionCNN(float *lr_img_rgb);
-    TfLiteInterpreter* interpreter_{};
-  private:
+    TfLiteInterpreter* interpreter_;
+
+private:
     // TODO: use unique_ptr
-    //TfLiteInterpreter* interpreter_;
     TfLiteModel* model_ = nullptr;
     TfLiteInterpreterOptions* options_ = nullptr;
     TfLiteDelegate* delegate_ = nullptr;

@@ -48,27 +48,29 @@ Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(JNIEnv *env, jobje
     const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
     jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
 
-    jboolean jbool = JNI_TRUE;
+    jboolean jbool = JNI_FALSE;
     jint *lr_img_rgb = env->GetIntArrayElements(low_res_rgb, &jbool);
 
     tflite::superresolution::SuperResolution *super_resolution = new tflite::superresolution::SuperResolution(model_data, static_cast<size_t>(model_size_bytes), true);
-    TfLiteTensor* tensor = TfLiteInterpreterGetInputTensor(super_resolution->interpreter_,0);
+    //TfLiteTensor* tensor = TfLiteInterpreterGetInputTensor(super_resolution->interpreter_,0);
 
     if (super_resolution->IsInterpreterCreated()) {
         LOGI("Interpreter is created successfully");
     }
 
     // Generate super resolution image
-    auto sr_rgb_colors = super_resolution->DoSuperResolution(static_cast<int *>(lr_img_rgb));
-    if (!sr_rgb_colors) {
-    return nullptr;  // super resolution failed
+    int* lr_test = new int[360*640];
+    int* sr_rgb_colors = super_resolution->DoSuperResolution2(lr_img_rgb);
+
+    if(sr_rgb_colors == nullptr){
+        return nullptr;
     }
     jintArray sr_img_rgb = env->NewIntArray(tflite::superresolution::kNumberOfOutputPixels);
     env->SetIntArrayRegion(sr_img_rgb, 0, tflite::superresolution::kNumberOfOutputPixels,
-                         sr_rgb_colors.get());
+                        sr_rgb_colors);
     // Clean up before we return
     env->ReleaseIntArrayElements(low_res_rgb, lr_img_rgb, JNI_COMMIT);
-
+    delete[] sr_rgb_colors;
     return sr_img_rgb;
 }
 
