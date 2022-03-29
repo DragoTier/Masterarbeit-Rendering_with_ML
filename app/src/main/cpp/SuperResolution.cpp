@@ -31,7 +31,6 @@
 
 
 namespace tflite {
-namespace examples {
 namespace superresolution {
 
 constexpr int kThreadNum = 4;
@@ -131,10 +130,15 @@ bool SuperResolution::isResponding(){
     return true;
 }
 
-std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
+int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
 
     LOGI("SUPERRESOLUTION METHOD STARTED");
 
+    for(int i = 0; i< kInputImageWidth * kInputImageHeight * 4; i++){
+        if(lr_img_rgb[i] != 0){
+          //  LOGI("pixels %i: %i",i , lr_img_rgb[i]);
+        }
+    }
 
     // Allocate tensors and populate the input tensor data
     TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
@@ -154,17 +158,17 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
     TfLiteTensor* input_tensor =
       TfLiteInterpreterGetInputTensor(interpreter_, input);
 
-
+    int* lr_img_rgb_int = reinterpret_cast<int*>(lr_img_rgb);
     // Extract RGB values from each pixel
-    float input_buffer[kNumberOfInputPixels * kImageChannels];
+    float* input_buffer = new float[kNumberOfInputPixels * kImageChannels];
     for (int i = 0, j = 0; i < kNumberOfInputPixels; i++) {
     // Alpha is ignored
-        input_buffer[j++] = static_cast<float>((lr_img_rgb[i] >> 16) & 0xff);
+        input_buffer[j++] = static_cast<float>(( ((int) lr_img_rgb_int[i]) >> 8) & 0xff);
         //input_buffer[j++] = static_cast<float>((lr_img_rgb[i] >> 16) & 0xff);
         //input_buffer[j++] = static_cast<float>((lr_img_rgb[i] >> 8) & 0xff);
        // LOGI("Input value: %f", input_buffer[j]);
     }
-    LOGI("Length of input buffer: %d", (sizeof(input_buffer)/sizeof(*input_buffer)));
+    //LOGI("Length of input buffer: %d", (sizeof(input_buffer)/sizeof(*input_buffer)));
 
 
     // Feed input into model
@@ -187,7 +191,7 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
     // Extract the output tensor data
     const TfLiteTensor* output_tensor =
       TfLiteInterpreterGetOutputTensor(interpreter_, 0);
-    float output_buffer[kNumberOfOutputPixels * kImageChannels];
+    float* output_buffer = new float[kNumberOfOutputPixels * kImageChannels];
     status = TfLiteTensorCopyToBuffer(
       output_tensor, output_buffer,
       kOutputImageHeight * kOutputImageWidth * sizeof(float));
@@ -198,9 +202,14 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
 
     int64_t endTime = getTimeNsec() - startTime;
 
+    //delete input_buffer and low res image
+    delete[] input_buffer;
+    delete[] lr_img_rgb_int;
+    //delete[] lr_img_rgb;
+
     // Postprocess the output from TFLite
     int clipped_output[kImageChannels];
-    auto rgb_colors = std::make_unique<int[]>(kNumberOfOutputPixels);
+    int* rgb_colors = new int[kNumberOfOutputPixels];
 
     for (int i = 0; i < kNumberOfOutputPixels; i++) {
         for (int j = 0; j < kImageChannels; j++) {
@@ -213,6 +222,9 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(int* lr_img_rgb) {
                         (clipped_output[0] & 0xff) << 16;
         //LOGI("color value: %d", rgb_colors[i]);
     }
+
+    //delete output_buffer
+    delete[] output_buffer;
 
     LOGI("Invoked count: %i", counter);
     LOGI("SuperResolution Time: %f ms", static_cast<float>(endTime)/1000000);
@@ -368,5 +380,4 @@ std::unique_ptr<int[]> SuperResolution::DoSuperResolution(AHardwareBuffer** hard
 }
 
 }  // namespace superresolution
-}  // namespace examples
 }  // namespace tflite

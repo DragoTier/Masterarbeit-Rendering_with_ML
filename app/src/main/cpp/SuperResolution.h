@@ -36,11 +36,10 @@
   ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
 
 namespace tflite {
-namespace examples {
 namespace superresolution {
 
-const int kInputImageHeight = 154;
-const int kInputImageWidth = 154;
+const int kInputImageHeight = 800;
+const int kInputImageWidth = 360;
 const int kImageChannels = 1;
 const int kNumberOfInputPixels = kInputImageHeight * kInputImageWidth;
 const int kUpscaleFactor = 3;
@@ -57,7 +56,7 @@ class SuperResolution {
     // returns a valid pointer if successful and nullptr if unsuccessful.
     // lr_img_rgb: the pointer to the RGB array extracted from low resolution
     // image
-    std::unique_ptr<int[]> DoSuperResolution(int* lr_img_rgb);
+    int* DoSuperResolution(uint8_t* lr_img_rgb);
 
     std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
     std::unique_ptr<int[]> DoSuperResolutionCNN(float *lr_img_rgb);
@@ -74,6 +73,5 @@ class SuperResolution {
 };
 
 }  // namespace superresolution
-}  // namespace examples
 }  // namespace tflite
 #endif

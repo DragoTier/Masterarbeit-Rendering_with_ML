@@ -46,9 +46,6 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-//import androidx.annotation.WorkerThread;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -58,7 +55,7 @@ import java.nio.channels.FileChannel;
 
 //import org.tensorflow.lite.nnapi.NnApiDelegate;
 
-public class GL2JNIActivity extends AppCompatActivity {
+public class GL2JNIActivity extends Activity {
 
     GLSurfaceView mView;
     static {
@@ -70,8 +67,8 @@ public class GL2JNIActivity extends AppCompatActivity {
     private static final String MODEL_NAME = "model_from_h5.tflite";
 
     //private static final String MODEL_NAME = "super-Resolution_converted.tflite";
-    private static final int LR_IMAGE_HEIGHT = 154;
-    private static final int LR_IMAGE_WIDTH = 154;
+    private static final int LR_IMAGE_HEIGHT = 800;
+    private static final int LR_IMAGE_WIDTH = 360;
     private static final int UPSCALE_FACTOR = 3;
     private static final int SR_IMAGE_HEIGHT = LR_IMAGE_HEIGHT * UPSCALE_FACTOR;
     private static final int SR_IMAGE_WIDTH = LR_IMAGE_WIDTH * UPSCALE_FACTOR;

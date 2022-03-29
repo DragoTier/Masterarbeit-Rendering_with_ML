@@ -25,12 +25,12 @@
 #include "SuperResolution.h"
 
 namespace tflite {
-namespace examples {
 namespace superresolution {
 
 extern "C" JNIEXPORT jintArray
 Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(
     JNIEnv *env, jobject thiz, jlong native_handle, jintArray low_res_rgb) {
+  /*
   jint *lr_img_rgb = env->GetIntArrayElements(low_res_rgb, NULL);
 
   if (!reinterpret_cast<SuperResolution *>(native_handle)
@@ -50,8 +50,8 @@ Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(
 
   // Clean up before we return
   env->ReleaseIntArrayElements(low_res_rgb, lr_img_rgb, JNI_COMMIT);
-
-  return sr_img_rgb;
+ */
+  return nullptr;
 }
 
 extern "C" JNIEXPORT jlong
@@ -75,5 +75,4 @@ Java_com_android_gl2jni_GL2JNIActivity_deinitFromJNI( JNIEnv *env, jobject thiz,
 }
 
 }  // namespace superresolution
-}  // namespace examples
 }  // namespace tflite

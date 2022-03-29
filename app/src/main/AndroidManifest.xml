@@ -7,11 +7,11 @@
       android:allowBackup="false"
       android:fullBackupContent="false"
       android:icon="@mipmap/ic_launcher"
-      android:theme="@style/Theme.AppCompat.Light"
+      android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
       android:label="@string/gl2jni_activity">
 
     <activity android:name="GL2JNIActivity"
-              android:theme="@style/Theme.AppCompat.Light"
+              android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
               android:exported="true"
               android:launchMode="standard"
               android:configChanges="orientation|keyboardHidden">

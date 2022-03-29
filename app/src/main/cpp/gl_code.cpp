@@ -48,6 +48,19 @@ std::unique_ptr<int[]> srImg;
 int width;
 int height;
 
+GLuint gProgram;
+GLuint gvPositionHandle;
+
+GLuint fbo;
+GLuint texture;
+AHardwareBuffer* hardware_buffer = nullptr;
+EGLImageKHR imageKHR;
+EGLClientBuffer clientBuffer;
+const GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,0.5f, -0.5f };
+
+int64_t startTime;
+int64_t endTime;
+
 static void printGLString(const char *name, GLenum s) {
     const char *v = (const char *) glGetString(s);
     LOGI("GL %s = %s\n", name, v);
@@ -153,15 +166,6 @@ GLuint createProgram(const char* pVertexSource, const char* pFragmentSource) {
     return program;
 }
 
-GLuint gProgram;
-GLuint gvPositionHandle;
-
-GLuint fbo;
-GLuint texture;
-AHardwareBuffer* hardware_buffer = nullptr;
-EGLImageKHR imageKHR;
-EGLClientBuffer clientBuffer;
-
 bool setupGraphics(int w, int h) {
     printGLString("Version", GL_VERSION);
     printGLString("Vendor", GL_VENDOR);
@@ -232,11 +236,6 @@ bool setupGraphics(int w, int h) {
     return true;
 }
 
-const GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f };
-
-int64_t startTime;
-int64_t endTime;
 
 int64_t getTimeNsec() {
     struct timespec now;
@@ -256,43 +255,42 @@ void dumpBuffer(){
     AHardwareBuffer_unlock(hardware_buffer, nullptr);
 }
 
-std::unique_ptr<int[]> doSuperResolution(){
-    if (!reinterpret_cast<tflite::examples::superresolution::SuperResolution *>(super_resolution_native_handle)
+int* doSuperResolution(){
+    if (!reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->IsInterpreterCreated()) {
         return nullptr;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    uint8_t pixels[width * height * 4];
-
+    uint8_t* pixels = new uint8_t[width * height * 4];
+  /*  glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_PACK_SKIP_ROWS, 0);
+    glPixelStorei(GL_PACK_ALIGNMENT, 0);
+    glPixelStorei(GL_PACK_ROW_LENGTH, width); */
     glReadPixels(0, 0, width, height, GL_RGBA,  GL_UNSIGNED_BYTE, pixels);
 
     endTime = getTimeNsec() - startTime;
     LOGI("Render + Readback Time: %ld", endTime);
 
     GLenum readPixelsError = glGetError();
-    FILE* pFile;
+  /*  FILE* pFile;
     pFile = fopen("/data/data/com.android.gl2jni/buffer_file_2.data", "wb");
     fwrite(pixels, 1, width*height*4, pFile);
-    fclose(pFile);
+    fclose(pFile); */
 
     LOGI("SuperRes native handle: %dl", super_resolution_native_handle);
-    tflite::examples::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle);
+    tflite::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::superresolution::SuperResolution*> (super_resolution_native_handle);
     if(superRes == nullptr){
         LOGE("super res handle is nullptr");
     }
     if(superRes->isResponding()){
         LOGI("IS RESPONDING");
     }
-    for(int i = 0; i< width*height*4; i++){
-        if(pixels[i] != 0){
-              LOGI("pixels %i: %i",i , pixels[i]);
-        }
-    }
-    int* pixelPointer = (int*)pixels;
+
     LOGI("SUPERRESOLUTION ABOUT TO START");
-    std::unique_ptr<int[]> srImgInt = superRes->DoSuperResolution(pixelPointer);
+    int* srImgInt = superRes->DoSuperResolution(pixels);
     //std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
     //       ->DoSuperResolution((int*)pixels);
    // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
@@ -309,13 +307,13 @@ std::unique_ptr<int[]> doSuperResolution(){
 }
 
 std::unique_ptr<int[]> doSuperResolutionHardwareBuffer(){
-    if (!reinterpret_cast<tflite::examples::superresolution::SuperResolution *>(super_resolution_native_handle)
+    if (!reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->IsInterpreterCreated()) {
         return nullptr;
     }
 
     // Generate super resolution image
-    auto srImgyo =  reinterpret_cast<tflite::examples::superresolution::SuperResolution *>(super_resolution_native_handle)
+    auto srImgyo =  reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
             ->DoSuperResolution(&hardware_buffer);
 
     return srImgyo;
@@ -379,11 +377,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHan
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
-    auto img = doSuperResolution();
-    jintArray sr_img_rgb = env->NewIntArray(width*3* height*3);
-    env->SetIntArrayRegion(sr_img_rgb, 0, width*3 * height*3,
-                           img.get());
-
+    int* img = doSuperResolution();
+    jintArray sr_img_rgb = env->NewIntArray(tflite::superresolution::kNumberOfOutputPixels);
+    env->SetIntArrayRegion(sr_img_rgb, 0, tflite::superresolution::kNumberOfOutputPixels, img);
+    delete[] img;
     return sr_img_rgb;
 }
 
