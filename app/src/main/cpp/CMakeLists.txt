@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 find_library(log-lib log)
 
-#tensorflow nnapi test
+#tensorflow
 set(TENSORFLOW_SOURCE_DIR "" CACHE PATH
         "Directory that contains the TensorFlow project" )
 if(NOT TENSORFLOW_SOURCE_DIR)
@@ -20,31 +20,34 @@ add_subdirectory(
        "${TENSORFLOW_SOURCE_DIR}/tensorflow/lite"
         "${CMAKE_CURRENT_BINARY_DIR}/tensorflow-lite" EXCLUDE_FROM_ALL)
 
+#GLM
+set(GLM_SOURCE_DIR "" CACHE PATH
+        "Directory containing glm")
+if(NOT GLM_SOURCE_DIR)
+        get_filename_component(GLM_SOURCE_DIR
+                "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/glm/" ABSOLUTE)
+endif()
 
-#libedgetpu
-#set(LIBEDGETPU_SOURCE_DIR "./../../../../libraries/libedgetpu/")
-#add_subdirectory("${LIBEDGETPU_SOURCE_DIR}"
-#        "${CMAKE_CURRENT_BINARY_DIR}/edgetpu" EXCLUDE_FROM_ALL)
-
-#absl google kram
-#set(ABSL_SOURCE_DIR "./../../../../libraries/abseil")
-#add_subdirectory(${ABSL_SOURCE_DIR}
-#        "${CMAKE_CURRENT_BINARY_DIR}/absl" EXCLUDE_FROM_ALL)
+add_subdirectory(
+        "${GLM_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/glm" EXCLUDE_FROM_ALL)
 
 
 #GL
 add_library(gl2jni SHARED
-            gl_code.cpp
+        gl_code.cpp
+        Shader.h
+        gl_tools.h
         SuperResolution_jni.cpp
         SuperResolution.cpp)
 
 target_include_directories(gl2jni PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/tf_test2/tensorflow_src")
-#target_include_directories(gl2jni PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/libedgetpu")
-#target_include_directories(gl2jni PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/abseil")
+target_include_directories(gl2jni PUBLIC "${GLM_SOURCE_DIR}")
 
 # add lib dependencies
 target_link_libraries(  gl2jni
-                        tensorflow-lite)
+                        tensorflow-lite
+                        glm)
 
 
 target_link_libraries(gl2jni
@@ -54,16 +57,10 @@ target_link_libraries(gl2jni
                       GLESv2
                       )
 
-#target_link_libraries(gl2jni absl::base absl::strings absl::type absl::flags absl::container)
-
 target_link_libraries(
         gl2jni
-        #tensorflow-lite
-        #lib_tensorflowlite
-        #lib_tensorflowlite_gpu
         neuralnetworks
         android
-        #log
         ${log-lib}
         )
 

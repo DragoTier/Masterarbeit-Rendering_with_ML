@@ -33,138 +33,58 @@
 #include <android/asset_manager.h>
 #include <GLES3/gl31.h>
 #include <GLES3/gl3ext.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-
+#include "gl_tools.h"
 #include "SuperResolution.h"
-//#include <glm/hlm.hpp>
-
+#include "Shader.h"
 
 #define  LOG_TAG    "libgl2jni"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
+namespace GLCode {
+
 long super_resolution_native_handle;
-std::unique_ptr<int[]> srImg;
+tflite::superresolution::SuperResolution* superRes = nullptr;
+std::unique_ptr<int[]> srImg = nullptr;
 int width;
 int height;
+float rotation = 0.0f;
 
 GLuint gProgram;
 GLuint gvPositionHandle;
 
 GLuint fbo;
 GLuint texture;
+GLuint highResTex;
 AHardwareBuffer* hardware_buffer = nullptr;
 EGLImageKHR imageKHR;
 EGLClientBuffer clientBuffer;
 const GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,0.5f, -0.5f };
 
+
+                                    //pos               //tex coords
+const float hr_screen_vertices[] = {1.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+                                    1.0f,-1.0f, 0.0f,   1.0f, 0.0f,
+                                   -1.0f,-1.0f, 0.0f,   0.0f, 0.0f,
+                                   -1.0f, 1.0f, 0.0f,   0.0f, 1.0f};
+
+GLuint indices[] = {
+        0, 1, 3,
+        1, 2, 3
+};
+GLuint VBO, VAO, EBO;
+
+
 int64_t startTime;
 int64_t endTime;
 
-static void printGLString(const char *name, GLenum s) {
-    const char *v = (const char *) glGetString(s);
-    LOGI("GL %s = %s\n", name, v);
-}
 
-static void checkGlError(const char* op) {
-    for (GLint error = glGetError(); error; error
-            = glGetError()) {
-        LOGI("after %s() glError (0x%x)\n", op, error);
-    }
-}
 
-auto gVertexShader = R"(#version 320 es
-    in vec4 vPosition;
-    void main() {
-      gl_Position = vec4(vPosition.x, 0.0f - vPosition.y, vPosition.z, vPosition.w);
-    }
-    )";
 
-auto gFragmentShader = R"(#version 320 es
-    precision mediump float;
-    out vec4 fragColor;
-    //out vec4 fragColor[2];
-
-    vec3 YUVfromRGB(vec3 color){
-        color = color * 255.0f;
-        float y =  0.257f * color.r + 0.504f * color.g + 0.098f * color.b + 160.0f;
-        float u = -0.148f * color.r - 0.291f * color.g + 0.439f * color.b + 1280.0f;
-        float v = 0.439f * color.r - 0.368f * color.g - 0.071f * color.b + 128.0f;
-        return vec3(y, u, v) * (1.0f/255.0f);
-    }
-
-    void main() {
-       vec3 color = vec3(1.0f, 1.0f, 0.0f);
-
-        vec3 yuv = YUVfromRGB(color);
-        fragColor = vec4(yuv, 1.0f);
-        //fragColor = vec4(color, 1.0f);
-    }
-    )";
-
-GLuint loadShader(GLenum shaderType, const char* pSource) {
-    GLuint shader = glCreateShader(shaderType);
-    if (shader) {
-        glShaderSource(shader, 1, &pSource, NULL);
-        glCompileShader(shader);
-        GLint compiled = 0;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled) {
-            GLint infoLen = 0;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
-            if (infoLen) {
-                char* buf = (char*) malloc(infoLen);
-                if (buf) {
-                    glGetShaderInfoLog(shader, infoLen, NULL, buf);
-                    LOGE("Could not compile shader %d:\n%s\n",
-                            shaderType, buf);
-                    free(buf);
-                }
-                glDeleteShader(shader);
-                shader = 0;
-            }
-        }
-    }
-    return shader;
-}
-
-GLuint createProgram(const char* pVertexSource, const char* pFragmentSource) {
-    GLuint vertexShader = loadShader(GL_VERTEX_SHADER, pVertexSource);
-    if (!vertexShader) {
-        return 0;
-    }
-
-    GLuint pixelShader = loadShader(GL_FRAGMENT_SHADER, pFragmentSource);
-    if (!pixelShader) {
-        return 0;
-    }
-
-    GLuint program = glCreateProgram();
-    if (program) {
-        glAttachShader(program, vertexShader);
-        checkGlError("glAttachShader");
-        glAttachShader(program, pixelShader);
-        checkGlError("glAttachShader");
-        glLinkProgram(program);
-        GLint linkStatus = GL_FALSE;
-        glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-        if (linkStatus != GL_TRUE) {
-            GLint bufLength = 0;
-            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &bufLength);
-            if (bufLength) {
-                char* buf = (char*) malloc(bufLength);
-                if (buf) {
-                    glGetProgramInfoLog(program, bufLength, NULL, buf);
-                    LOGE("Could not link program:\n%s\n", buf);
-                    free(buf);
-                }
-            }
-            glDeleteProgram(program);
-            program = 0;
-        }
-    }
-    return program;
-}
 
 bool setupGraphics(int w, int h) {
     printGLString("Version", GL_VERSION);
@@ -221,7 +141,7 @@ bool setupGraphics(int w, int h) {
 
 
     LOGI("setupGraphics(%d, %d)", w, h);
-    gProgram = createProgram(gVertexShader, gFragmentShader);
+    gProgram = createProgram(vertexShaderLR, fragmentShaderLR);
     if (!gProgram) {
         LOGE("Could not create program.");
         return false;
@@ -255,54 +175,58 @@ void dumpBuffer(){
     AHardwareBuffer_unlock(hardware_buffer, nullptr);
 }
 
+void renderHighResFrame() {
+    static float grey;
+    grey = 1.0f;
+    if (grey > 1.0f) {
+        grey = 0.0f;
+    }
+    glClearColor(grey, grey, grey, 1.0f);
+    checkGlError("glClearColor");
+    glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    checkGlError("glClear");
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(gProgram);
+    checkGlError("glUseProgram");
+
+    glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
+    checkGlError("glVertexAttribPointer");
+    glEnableVertexAttribArray(gvPositionHandle);
+    checkGlError("glEnableVertexAttribArray");
+
+    //glVertexAttribPointer(1,2, GL_FLOAT, GL_FALSE, 0, )
+    //GLenum buffers[]{ GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
+    //glDrawBuffers(2, buffers);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    checkGlError("glDrawArrays");
+}
+
 int* doSuperResolution(){
-    if (!reinterpret_cast<tflite::superresolution::SuperResolution *>(super_resolution_native_handle)
-            ->IsInterpreterCreated()) {
+    if (!superRes->IsInterpreterCreated()) {
         return nullptr;
     }
-
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     uint8_t* pixels = new uint8_t[width * height * 4];
-  /*  glPixelStorei(GL_PACK_ROW_LENGTH, 0);
-    glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_PACK_SKIP_ROWS, 0);
-    glPixelStorei(GL_PACK_ALIGNMENT, 0);
-    glPixelStorei(GL_PACK_ROW_LENGTH, width); */
     glReadPixels(0, 0, width, height, GL_RGBA,  GL_UNSIGNED_BYTE, pixels);
 
-    endTime = getTimeNsec() - startTime;
-    LOGI("Render + Readback Time: %ld", endTime);
-
     GLenum readPixelsError = glGetError();
-  /*  FILE* pFile;
-    pFile = fopen("/data/data/com.android.gl2jni/buffer_file_2.data", "wb");
-    fwrite(pixels, 1, width*height*4, pFile);
-    fclose(pFile); */
 
-    LOGI("SuperRes native handle: %dl", super_resolution_native_handle);
-    tflite::superresolution::SuperResolution* superRes = reinterpret_cast<tflite::superresolution::SuperResolution*> (super_resolution_native_handle);
-    if(superRes == nullptr){
-        LOGE("super res handle is nullptr");
-    }
-    if(superRes->isResponding()){
-        LOGI("IS RESPONDING");
-    }
-
-    LOGI("SUPERRESOLUTION ABOUT TO START");
     int* srImgInt = superRes->DoSuperResolution(pixels);
-    //std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
-    //       ->DoSuperResolution((int*)pixels);
-   // std::unique_ptr<int[]> srImgInt = reinterpret_cast<tflite::examples::superresolution::SuperResolution*> (super_resolution_native_handle)
-   //       ->DoSuperResolutionCNN(pixels);
-
-   /* FILE* pFile2;
-    pFile2 = fopen("/data/data/com.android.gl2jni/buffer_file_3.data", "wb");
-    fwrite(&srImgInt[0], 1, 200*200*4, pFile2);
-    fclose(pFile2); */
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    glViewport(0, 0, width*3, height*3);
+
+    glGenTextures(1,&highResTex);
+    glBindTexture(GL_TEXTURE_2D, highResTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,tflite::superresolution::kOutputImageWidth, tflite::superresolution::kOutputImageHeight, 0, GL_RGB, GL_INT, srImgInt);
+    renderHighResFrame();
+    glViewport(0, 0, width, height);
+
+    endTime = getTimeNsec() - startTime;
+    LOGI("Render + Readback + Upscale Time: %f ms", static_cast<float>(endTime)/1000000);
     return srImgInt;
 }
 
@@ -326,17 +250,17 @@ void renderFrame() {
     startTime = getTimeNsec();
 
     static float grey;
-    grey = 0.01f;
+    grey = 1.0f;
     if (grey > 1.0f) {
         grey = 0.0f;
     }
-
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glClearColor(grey, grey, grey, 1.0f);
     checkGlError("glClearColor");
-    glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClear(  GL_COLOR_BUFFER_BIT);
     checkGlError("glClear");
 
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
     //glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(gProgram);
     checkGlError("glUseProgram");
@@ -345,22 +269,28 @@ void renderFrame() {
     checkGlError("glVertexAttribPointer");
     glEnableVertexAttribArray(gvPositionHandle);
     checkGlError("glEnableVertexAttribArray");
+    rotation += 10.0f;
+    glm ::mat4 trans = glm::mat4(1.0f);
+    trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0, 0.0, 1.0));
 
+    unsigned int transformLoc = glGetUniformLocation(gProgram, "transform");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
     //GLenum buffers[]{ GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
     //glDrawBuffers(2, buffers);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+
     checkGlError("glDrawArrays");
 
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj,  jint width, jint height);
+    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
     JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv * env, jclass obj);
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHandle(JNIEnv * env,jclass obj, jlong native_handle);
+    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
     JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj,  jint width, jint height)
+extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
 {
     setupGraphics(width, height);
     renderFrame();
@@ -374,6 +304,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv 
 extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle){
 
     super_resolution_native_handle = native_handle;
+    superRes = reinterpret_cast<tflite::superresolution::SuperResolution*> (super_resolution_native_handle);
+
+    if(superRes == nullptr){
+        LOGE("super res handle is nullptr");
+    }
+    if(superRes->isResponding()){
+        LOGI("IS RESPONDING");
+    }
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
@@ -385,4 +323,15 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSupe
 }
 
 
+} //namespace
+
+/* FILE* pFile2;
+ pFile2 = fopen("/data/data/com.android.gl2jni/buffer_file_3.data", "wb");
+ fwrite(&srImgInt[0], 1, 200*200*4, pFile2);
+ fclose(pFile2); */
+
+/*  FILE* pFile;
+  pFile = fopen("/data/data/com.android.gl2jni/buffer_file_2.data", "wb");
+  fwrite(pixels, 1, width*height*4, pFile);
+  fclose(pFile); */
 

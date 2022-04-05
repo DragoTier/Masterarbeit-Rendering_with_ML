@@ -18,38 +18,17 @@ package com.android.gl2jni;
 
 import android.Manifest;
 import android.app.Activity;
-import android.graphics.ColorSpace;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
-import android.view.WindowManager;
 
-import java.io.File;
-
-import com.android.gl2jni.R;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Bundle;
-import android.os.SystemClock;
-import android.app.Activity;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -57,16 +36,15 @@ import java.nio.channels.FileChannel;
 
 public class GL2JNIActivity extends Activity {
 
-    GLSurfaceView mView;
+
     static {
         System.loadLibrary("gl2jni");
     }
 
-
+    private GLSurfaceView view;
     private static final String TAG = "SuperResolution";
     private static final String MODEL_NAME = "model_from_h5.tflite";
 
-    //private static final String MODEL_NAME = "super-Resolution_converted.tflite";
     private static final int LR_IMAGE_HEIGHT = 800;
     private static final int LR_IMAGE_WIDTH = 360;
     private static final int UPSCALE_FACTOR = 3;
@@ -78,58 +56,29 @@ public class GL2JNIActivity extends Activity {
 
     private MappedByteBuffer model;
     private long superResolutionNativeHandle = 0;
-    private Bitmap selectedLRBitmap = null;
-    private boolean useGPU = false;
 
     private ImageView lowResImageView1;
     private ImageView lowResImageView2;
     private ImageView lowResImageView3;
     private TextView selectedImageTextView;
-    private Switch gpuSwitch;
 
     private static final int PERMISSION_REQUEST_CODE = 111111111;
 
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.activity_main);
+        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
         final ImageView superResolutionImageView = findViewById(R.id.imageView);
         superResolutionImageView.setImageDrawable(null);
 
         superResolutionNativeHandle = initTFLiteInterpreter(true);
         GL2JNILib.setNativeHandle(superResolutionNativeHandle);
-        mView = (GLSurfaceView) findViewById(R.id.viewTest); //new GL2JNIView(getApplication());
-        mView.setEGLContextClientVersion(3);
-        OpenGLRenderer renderer = new OpenGLRenderer();
-
+        view = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
+        view.setEGLContextClientVersion(3);
+        OpenGlRenderer renderer = new OpenGlRenderer();
         renderer.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
-        mView.setRenderer(renderer);
-        //setContentView(mView);
-
-        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
-
-        /*Bitmap bitmap = null;
-        try{
-            AssetManager assetManager = getAssets();
-            InputStream inputStream = assetManager.open(LR_IMG_1);
-            bitmap = BitmapFactory.decodeStream(inputStream);
-        } catch (IOException e){
-            Log.e(TAG, "Failed to open an low resolution image");
-        }
-        int[] lowResRGB = new int[LR_IMAGE_WIDTH * LR_IMAGE_HEIGHT];
-        bitmap.getPixels(lowResRGB, 0, bitmap.getRowBytes()/4, 0, 0, LR_IMAGE_WIDTH, LR_IMAGE_HEIGHT);
-        Bitmap.Config config = bitmap.getConfig();
-        final long startTime = SystemClock.uptimeMillis();
-        int[] superResRGB = doSuperResolution(lowResRGB);//GL2JNILib.getSuperResImg(); //do super resolution
-        final long processingTimeMs = SystemClock.uptimeMillis() - startTime;
-        if(superResRGB == null){
-            Log.e(TAG, "super resolution failed");
-        }
-
-        Bitmap srImgBitmap = Bitmap.createBitmap(superResRGB, SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
-        final ImageView superResolutionImageView = findViewById(R.id.imageView);
-        superResolutionImageView.setImageDrawable(null);
-        superResolutionImageView.setImageBitmap(srImgBitmap); */
+        view.setRenderer(renderer);
     }
 
     @Override
@@ -139,30 +88,6 @@ public class GL2JNIActivity extends Activity {
         if(requestCode == PERMISSION_REQUEST_CODE){
             //muss nicht gefüllt werden
         }
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mView.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mView.onResume();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        deinit();
-    }
-
-    //@WorkerThread
-    public synchronized int[] doSuperResolution(int[] lowResRGB) {
-        return superResolutionFromJNI(superResolutionNativeHandle, lowResRGB);
     }
 
     private MappedByteBuffer loadModelFile() throws IOException {
@@ -183,6 +108,24 @@ public class GL2JNIActivity extends Activity {
             Log.e(TAG, "Fail to load model", e);
         }
         return initWithByteBufferFromJNI(model, useNNAPI);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        view.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        view.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        deinit();
     }
 
     private void deinit() {

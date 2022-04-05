@@ -26,6 +26,7 @@ public class HandlerCallback implements Handler.Callback{
         if(bundle != null){
             int[] pixels = bundle.getIntArray("pixels");
             Bitmap srImgBitmap = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+            srImageView.setImageBitmap(null);
             srImageView.setImageBitmap(srImgBitmap);
             return true;
         }

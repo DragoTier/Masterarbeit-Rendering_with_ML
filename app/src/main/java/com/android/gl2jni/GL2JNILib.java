@@ -20,10 +20,6 @@ package com.android.gl2jni;
 
 public class GL2JNILib {
 
-     static {
-         System.loadLibrary("gl2jni");
-     }
-
     /**
      * @param width the current view width
      * @param height the current view height
@@ -32,4 +28,5 @@ public class GL2JNILib {
      public static native void step();
      public static native void setNativeHandle(long nativeHandle);
      public static native int[] getSuperResImg();
+
 }
