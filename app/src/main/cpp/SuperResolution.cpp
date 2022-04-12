@@ -33,7 +33,7 @@
 namespace tflite {
 namespace superresolution {
 
-constexpr int kThreadNum = 4;
+constexpr int kThreadNum = 12;
 const NnApi* nnapi_object;
 StatefulNnApiDelegate* delegate;
 
@@ -54,14 +54,16 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
 
     // add nnapi delegate //Add GPU Delegate
     if (true) {
-        nnapi_object = NnApiImplementation();
+       /* nnapi_object = NnApiImplementation();
 
         StatefulNnApiDelegate::Options nnapi_options = StatefulNnApiDelegate::Options();
-        //nnapi_options.accelerator_name = "google-armnn";
+        nnapi_options.accelerator_name = "google-armnn";
+        //nnapi_options.accelerator_name = "google-edgetpu";
         nnapi_options.disallow_nnapi_cpu = true;
-        delegate_ = new StatefulNnApiDelegate(nnapi_object, nnapi_options);
-        //TfLiteGpuDelegateOptionsV2 default_options = TfLiteGpuDelegateOptionsV2Default();
-        //delegate_ = TfLiteGpuDelegateV2Create(&default_options);
+        delegate_ = new StatefulNnApiDelegate(nnapi_object, nnapi_options); */
+        TfLiteGpuDelegateOptionsV2 default_options = TfLiteGpuDelegateOptionsV2Default();
+
+        delegate_ = TfLiteGpuDelegateV2Create(&default_options);
 
         TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
     } else {
@@ -145,11 +147,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
     auto width = interpreter_->impl->tensor(input)->dims->data[2];
     auto channels = interpreter_->impl->tensor(input)->dims->data[3];
 
-
-
-    TfLiteTensor* input_tensor =
-      TfLiteInterpreterGetInputTensor(interpreter_, input);
-
+    TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter_, input);
 
     int* lr_img_rgb_int = reinterpret_cast<int*>(lr_img_rgb);
     // Extract RGB values from each pixel
@@ -163,6 +161,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
     }
 
     // Feed input into model
+    int64_t startTime = getTimeNsec();
     //status = TfLiteTensorCopyFromBuffer(input_tensor, input_buffer, kNumberOfInputPixels * kImageChannels * sizeof(float));
     status = TfLiteTensorCopyFromBuffer(
             input_tensor, input_buffer,kInputImageHeight * kInputImageWidth * sizeof(float));
@@ -170,7 +169,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
         LOGE("Something went wrong when copying input buffer to input tensor");
         return nullptr;
     }
-    int64_t startTime = getTimeNsec();
+
     // Run the interpreter
     status = TfLiteInterpreterInvoke(interpreter_);
     if (status != kTfLiteOk) {
@@ -186,15 +185,15 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
       output_tensor, output_buffer,
       kOutputImageHeight * kOutputImageWidth * sizeof(float));
     if (status != kTfLiteOk) {
-    LOGE("Something went wrong when copying output tensor to output buffer");
-    return nullptr;
+        LOGE("Something went wrong when copying output tensor to output buffer");
+        return nullptr;
     }
 
     int64_t endTime = getTimeNsec() - startTime;
-
+    LOGI("UPSCALE TIME: %f", static_cast<float>(endTime)/1000000);
     //delete input_buffer and low res image
     delete[] input_buffer;
-    delete[] lr_img_rgb_int;
+    //delete[] lr_img_rgb_int;
     //delete[] lr_img_rgb;
 
     // Postprocess the output from TFLite

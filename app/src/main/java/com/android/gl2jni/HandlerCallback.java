@@ -22,14 +22,14 @@ public class HandlerCallback implements Handler.Callback{
 
     @Override
     public boolean handleMessage(@NonNull Message msg) {
-        Bundle bundle = msg.getData();
+      /*  Bundle bundle = msg.getData();
         if(bundle != null){
             int[] pixels = bundle.getIntArray("pixels");
             Bitmap srImgBitmap = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
             srImageView.setImageBitmap(null);
             srImageView.setImageBitmap(srImgBitmap);
             return true;
-        }
+        } */
         return false;
     }
 }

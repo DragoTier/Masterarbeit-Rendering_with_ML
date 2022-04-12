@@ -10,24 +10,26 @@ import android.os.Message;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class OpenGLRenderer implements GLSurfaceView.Renderer {
+public class OpenGLRendererHR implements GLSurfaceView.Renderer {
 
+    private final Object obj;
     public Handler handler;
 
+    public OpenGLRendererHR(Object obj){
+        this.obj = obj;
+    }
     @Override
     public void onDrawFrame(GL10 gl) {
-        GL2JNILib.step();
-        int[] img = GL2JNILib.getSuperResImg();
-        Message msg = handler.obtainMessage();
-        Bundle bundle = new Bundle();
-        bundle.putIntArray("pixels", img);
-        msg.setData(bundle);
-        handler.sendMessage(msg);
+        synchronized (obj){
+            GL2JNILib.stepHR();
+        }
+
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GL2JNILib.init(width, height);
+        System.out.println(gl.glGetString(GL10.GL_VERSION));
+        GL2JNILib.initHR(width, height);
     }
 
     @Override

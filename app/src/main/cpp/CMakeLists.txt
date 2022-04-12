@@ -35,9 +35,13 @@ add_subdirectory(
 
 #GL
 add_library(gl2jni SHARED
-        gl_code.cpp
-        Shader.h
-        gl_tools.h
+        gl_code_lr.cpp
+        gl_code_hr.cpp
+        Shader_lr.h
+        Shader_hr.h
+        gl_tools_lr.h
+        gl_tools_hr.h
+        gl_texture_model.h
         SuperResolution_jni.cpp
         SuperResolution.cpp)
 
@@ -54,7 +58,7 @@ target_link_libraries(gl2jni
                       android
                       log
                       EGL
-                      GLESv2
+                      GLESv3
                       )
 
 target_link_libraries(

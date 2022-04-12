@@ -25,7 +25,6 @@ import android.util.Log;
 
 import android.content.res.AssetFileDescriptor;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -41,7 +40,8 @@ public class GL2JNIActivity extends Activity {
         System.loadLibrary("gl2jni");
     }
 
-    private GLSurfaceView view;
+    private GLSurfaceView viewLR;
+    private GLSurfaceView viewHR;
     private static final String TAG = "SuperResolution";
     private static final String MODEL_NAME = "model_from_h5.tflite";
 
@@ -50,17 +50,9 @@ public class GL2JNIActivity extends Activity {
     private static final int UPSCALE_FACTOR = 3;
     private static final int SR_IMAGE_HEIGHT = LR_IMAGE_HEIGHT * UPSCALE_FACTOR;
     private static final int SR_IMAGE_WIDTH = LR_IMAGE_WIDTH * UPSCALE_FACTOR;
-    private static final String LR_IMG_1 = "testImage.png";
-    private static final String LR_IMG_2 = "lr-2.jpg";
-    private static final String LR_IMG_3 = "lr-3.jpg";
 
     private MappedByteBuffer model;
     private long superResolutionNativeHandle = 0;
-
-    private ImageView lowResImageView1;
-    private ImageView lowResImageView2;
-    private ImageView lowResImageView3;
-    private TextView selectedImageTextView;
 
     private static final int PERMISSION_REQUEST_CODE = 111111111;
 
@@ -69,16 +61,24 @@ public class GL2JNIActivity extends Activity {
         setContentView(R.layout.activity_main);
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-        final ImageView superResolutionImageView = findViewById(R.id.imageView);
+        ImageView superResolutionImageView = (ImageView) findViewById(R.id.imageView);
         superResolutionImageView.setImageDrawable(null);
+        Object obj = new Object();
 
         superResolutionNativeHandle = initTFLiteInterpreter(true);
         GL2JNILib.setNativeHandle(superResolutionNativeHandle);
-        view = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
-        view.setEGLContextClientVersion(3);
-        OpenGlRenderer renderer = new OpenGlRenderer();
-        renderer.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
-        view.setRenderer(renderer);
+        viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
+        viewLR.setEGLContextClientVersion(3);
+
+        OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj);
+        rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
+        viewLR.setRenderer(rendererLR);
+
+        viewHR = (GLSurfaceView) findViewById(R.id.highResView); //new GL2JNIView(getApplication());
+        viewHR.setEGLContextClientVersion(3);
+        OpenGLRendererHR rendererHR = new OpenGLRendererHR(obj);
+        viewHR.setRenderer(rendererHR);
+        viewHR.setZOrderMediaOverlay(true);
     }
 
     @Override
@@ -113,13 +113,13 @@ public class GL2JNIActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        view.onPause();
+        viewLR.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        view.onResume();
+        viewLR.onResume();
     }
 
     @Override
