@@ -43,7 +43,7 @@ public class GL2JNIActivity extends Activity {
     private GLSurfaceView viewLR;
     private GLSurfaceView viewHR;
     private static final String TAG = "SuperResolution";
-    private static final String MODEL_NAME = "model_from_h5.tflite";
+    private static final String MODEL_NAME = "model_from_h5_edge.tflite";
 
     private static final int LR_IMAGE_HEIGHT = 800;
     private static final int LR_IMAGE_WIDTH = 360;
