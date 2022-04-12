@@ -141,8 +141,6 @@ int64_t getTimeNsec() {
 int counter = 0;
 
 bool SuperResolution::isResponding(){
-    int i = 5;
-    i++;
     return true;
 }
 
