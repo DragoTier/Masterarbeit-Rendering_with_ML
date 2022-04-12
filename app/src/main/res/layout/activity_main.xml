@@ -3,32 +3,43 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:visibility="visible"
     tools:context="com.android.gl2jni.GL2JNIActivity"
     tools:visibility="visible">
 
-    <!---<android.opengl.GLSurfaceView
-        android:id="@+id/viewTest"
-        android:layout_width="160px"
-        android:layout_height="107px"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="300px"
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/lowResView"
+        android:layout_marginTop="100px"
+        android:layout_marginLeft="100px"
+        android:layout_width="360px"
+        android:layout_height="800px"
         android:visibility="visible"
-        tools:visibility="visible" /> -->
+        tools:visibility="visible" />
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="1080px"
-        android:layout_height="1920px"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="145dp"
+        android:layout_height="2400px"
         android:src="@drawable/ic_launcher"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible" />
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/highResView"
+        android:layout_width="1080px"
+        android:layout_height="2400px"
+        android:visibility="visible"
+        tools:visibility="visible" />
+</RelativeLayout>
+
+<!--
+android:layout_marginBottom="45dp"
+ android:layout_alignParentBottom="true"
+
+         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible" />
-</RelativeLayout>
