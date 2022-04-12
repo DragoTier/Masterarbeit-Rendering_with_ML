@@ -38,7 +38,7 @@
 namespace tflite {
 namespace superresolution {
 
-const int kInputImageHeight = 640;
+const int kInputImageHeight = 800;
 const int kInputImageWidth = 360;
 const int kImageChannels = 1;
 const int kNumberOfInputPixels = kInputImageHeight * kInputImageWidth;
@@ -49,7 +49,6 @@ const int kNumberOfOutputPixels = kOutputImageHeight * kOutputImageWidth;
 
 class SuperResolution {
   public:
-    SuperResolution();
     SuperResolution(const void* model_data, size_t model_size, bool use_nnapi);
     ~SuperResolution();
     bool IsInterpreterCreated();
@@ -57,15 +56,15 @@ class SuperResolution {
     // returns a valid pointer if successful and nullptr if unsuccessful.
     // lr_img_rgb: the pointer to the RGB array extracted from low resolution
     // image
-    std::unique_ptr<int> DoSuperResolution(const int* lr_img_rgb);
-    int* DoSuperResolution2(const int* lr_img_rgb);
+    int* DoSuperResolution(uint8_t* lr_img_rgb);
 
-    //std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
+    std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
     std::unique_ptr<int[]> DoSuperResolutionCNN(float *lr_img_rgb);
-    TfLiteInterpreter* interpreter_;
+    bool isResponding();
 
-private:
+  private:
     // TODO: use unique_ptr
+    TfLiteInterpreter* interpreter_;
     TfLiteModel* model_ = nullptr;
     TfLiteInterpreterOptions* options_ = nullptr;
     TfLiteDelegate* delegate_ = nullptr;

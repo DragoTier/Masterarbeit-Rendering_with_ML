@@ -18,133 +18,67 @@ package com.android.gl2jni;
 
 import android.Manifest;
 import android.app.Activity;
-import android.graphics.ColorSpace;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
-import android.view.WindowManager;
 
-import java.io.File;
-
-import com.android.gl2jni.R;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Bundle;
-import android.os.SystemClock;
-import android.app.Activity;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
-//import androidx.annotation.WorkerThread;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 //import org.tensorflow.lite.nnapi.NnApiDelegate;
 
-public class GL2JNIActivity extends AppCompatActivity {
+public class GL2JNIActivity extends Activity {
 
-    GLSurfaceView mView;
+
     static {
         System.loadLibrary("gl2jni");
     }
 
-
+    private GLSurfaceView viewLR;
+    private GLSurfaceView viewHR;
     private static final String TAG = "SuperResolution";
-    private static final String MODEL_NAME = "model_from_h5.tflite";
+    private static final String MODEL_NAME = "model_from_h5_edge.tflite";
 
-    private static final int LR_IMAGE_HEIGHT = 640;
+    private static final int LR_IMAGE_HEIGHT = 800;
     private static final int LR_IMAGE_WIDTH = 360;
     private static final int UPSCALE_FACTOR = 3;
     private static final int SR_IMAGE_HEIGHT = LR_IMAGE_HEIGHT * UPSCALE_FACTOR;
     private static final int SR_IMAGE_WIDTH = LR_IMAGE_WIDTH * UPSCALE_FACTOR;
-    private static final String LR_IMG_1 = "yoda_small.jpg";
-    private static final String LR_IMG_2 = "lr-2.jpg";
-    private static final String LR_IMG_3 = "lr-3.jpg";
 
     private MappedByteBuffer model;
     private long superResolutionNativeHandle = 0;
-    private Bitmap selectedLRBitmap = null;
-    private boolean useGPU = false;
-
-    private ImageView lowResImageView1;
-    private ImageView lowResImageView2;
-    private ImageView lowResImageView3;
-    private TextView selectedImageTextView;
-    private Switch gpuSwitch;
 
     private static final int PERMISSION_REQUEST_CODE = 111111111;
-
-    private Handler handler;
 
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.activity_main);
-
-        //final ImageView superResolutionImageView = findViewById(R.id.imageView);
-        //superResolutionImageView.setImageDrawable(null);
-
-      /*   superResolutionNativeHandle = initTFLiteInterpreter(true);
-        GL2JNILib.setNativeHandle(superResolutionNativeHandle);
-        mView = (GLSurfaceView) findViewById(R.id.viewTest); //new GL2JNIView(getApplication());
-        mView.setEGLContextClientVersion(3);
-        OpenGLRenderer renderer = new OpenGLRenderer();
-
-       handler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                Bundle bundle = msg.getData();
-                int[] pixels = bundle.getIntArray("pixels");
-                Bitmap srImgBitmap = Bitmap.createBitmap(pixels, SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
-                superResolutionImageView.setImageBitmap(srImgBitmap);
-            }
-        };
-
-        renderer.handler = handler;
-        mView.setRenderer(renderer);*/
-        //setContentView(mView);
-
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-        Bitmap bitmap = null;
-        try{
-            AssetManager assetManager = getAssets();
-            InputStream inputStream = assetManager.open(LR_IMG_1);
-            bitmap = BitmapFactory.decodeStream(inputStream);
-        } catch (IOException e){
-            Log.e(TAG, "Failed to open an low resolution image");
-        }
-        int[] lowResRGB = new int[LR_IMAGE_WIDTH * LR_IMAGE_HEIGHT];
-        bitmap.getPixels(lowResRGB, 0, bitmap.getRowBytes()/4, 0, 0, LR_IMAGE_WIDTH, LR_IMAGE_HEIGHT);
-        Bitmap.Config config = bitmap.getConfig();
-        final long startTime = SystemClock.uptimeMillis();
-        //superResolutionNativeHandle = initTFLiteInterpreter(true);
-        int[] superResRGB = doSuperResolution(lowResRGB);//GL2JNILib.getSuperResImg(); //do super resolution
-        final long processingTimeMs = SystemClock.uptimeMillis() - startTime;
-        if(superResRGB == null){
-            Log.e(TAG, "super resolution failed");
-        }
-
-        Bitmap srImgBitmap = Bitmap.createBitmap(superResRGB, SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
-        final ImageView superResolutionImageView = findViewById(R.id.imageView);
+        ImageView superResolutionImageView = (ImageView) findViewById(R.id.imageView);
         superResolutionImageView.setImageDrawable(null);
-        superResolutionImageView.setImageBitmap(srImgBitmap);
+        Object obj = new Object();
+
+        superResolutionNativeHandle = initTFLiteInterpreter(true);
+        GL2JNILib.setNativeHandle(superResolutionNativeHandle);
+        viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
+        viewLR.setEGLContextClientVersion(3);
+
+        OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj);
+        rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
+        viewLR.setRenderer(rendererLR);
+
+        viewHR = (GLSurfaceView) findViewById(R.id.highResView); //new GL2JNIView(getApplication());
+        viewHR.setEGLContextClientVersion(3);
+        OpenGLRendererHR rendererHR = new OpenGLRendererHR(obj);
+        viewHR.setRenderer(rendererHR);
+        viewHR.setZOrderMediaOverlay(true);
     }
 
     @Override
@@ -154,35 +88,6 @@ public class GL2JNIActivity extends AppCompatActivity {
         if(requestCode == PERMISSION_REQUEST_CODE){
             //muss nicht gefüllt werden
         }
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-       // mView.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-      //  mView.onResume();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        deinit();
-    }
-
-    //@WorkerThread
-    public synchronized int[] doSuperResolution(int[] lowResRGB) {
-        try {
-            model = loadModelFile();
-        } catch (IOException e) {
-            Log.e(TAG, "Fail to load model", e);
-        }
-        return superResolutionFromJNI(model, lowResRGB);
     }
 
     private MappedByteBuffer loadModelFile() throws IOException {
@@ -205,11 +110,29 @@ public class GL2JNIActivity extends AppCompatActivity {
         return initWithByteBufferFromJNI(model, useNNAPI);
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        viewLR.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        viewLR.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        deinit();
+    }
+
     private void deinit() {
         deinitFromJNI(superResolutionNativeHandle);
     }
 
-    private native int[] superResolutionFromJNI(MappedByteBuffer modelBuffer, int[] lowResRGB);
+    private native int[] superResolutionFromJNI(long superResolutionNativeHandle, int[] lowResRGB);
 
     private native long initWithByteBufferFromJNI(MappedByteBuffer modelBuffer, boolean useGPU);
 
