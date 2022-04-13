@@ -10,7 +10,7 @@ public class GLES32JNILib {
     public static native void init(int width, int height);
     public static native void step();
     public static native void setNativeHandle(long nativeHandle);
-    public static native int[] getSuperResImg();
+    public static native void upscaleImg();
 
     public static native void initHR(int width, int height);
     public static native void stepHR();

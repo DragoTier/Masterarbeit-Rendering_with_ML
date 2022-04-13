@@ -44,8 +44,8 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
             {
                 nnapi_object = NnApiImplementation();
                 StatefulNnApiDelegate::Options nnapi_options = StatefulNnApiDelegate::Options();
-                //nnapi_options.execution_preference = StatefulNnApiDelegate::Options::kSustainedSpeed;
-                //nnapi_options.max_number_delegated_partitions = 0;
+                nnapi_options.execution_preference = StatefulNnApiDelegate::Options::kSustainedSpeed;
+                nnapi_options.max_number_delegated_partitions = 0;
                 //nnapi_options.allow_fp16 = true;
                 //nnapi_options.use_burst_computation = true;
                // nnapi_options.accelerator_name = "qti-dsp";
@@ -158,7 +158,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
     TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter_, input);
 
     int* lr_img_rgb_int = reinterpret_cast<int*>(lr_img_rgb);
-    // Get Y (greyscale) from yuv
+    // Get Y (greyscale) from clear_color_yuv
     uint8_t * input_buffer = new uint8_t[kNumberOfInputPixels * kImageChannels];
     for (int i = 0, j = 0; i < kNumberOfInputPixels; i++) {
         input_buffer[j++] = static_cast<uint8_t>(( lr_img_rgb_int[i] >> 8) & 0xff);
@@ -208,7 +208,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
         }
         // When we have RGB values, we pack them into a single pixel.
         // Alpha is set to 255.
-        rgb_colors[i] = (255u & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 |
+        rgb_colors[i] = (clipped_output[0] & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 |
                         (clipped_output[0] & 0xff) |
                         (clipped_output[0] & 0xff) << 16;
         //LOGI("color value: %d", rgb_colors[i]);,

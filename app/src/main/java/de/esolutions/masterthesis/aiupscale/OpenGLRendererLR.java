@@ -19,7 +19,7 @@ public class OpenGLRendererLR implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         synchronized (obj){
             GLES32JNILib.step();
-            int[] img = GLES32JNILib.getSuperResImg();
+            GLES32JNILib.upscaleImg();
         }
 
 

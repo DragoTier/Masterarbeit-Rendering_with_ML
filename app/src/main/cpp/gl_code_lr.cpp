@@ -30,8 +30,12 @@ namespace GLCode{
 
 long super_resolution_native_handle;
 tflite::superresolution::SuperResolution* superRes = nullptr;
-std::unique_ptr<int[]> srImg = nullptr;
 
+//clear color
+float clear_color[] = {0.1f, 0.1f, 0.1f};
+std::vector<GLfloat> clear_color_yuv;
+
+//transform
 float rotation = 0.0f;
 
 GLuint shaderProgramLR;
@@ -54,6 +58,7 @@ const GLfloat gTriangleVertices[] = { 0.0f, 0.5f, -0.5f, -0.5f,0.5f, -0.5f };
 int64_t startTime;
 int64_t endTime;
 
+void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv);
 
 bool setupGraphics(int w, int h) {
     printGLString("Version", GL_VERSION);
@@ -122,6 +127,9 @@ bool setupGraphics(int w, int h) {
 
     glViewport(0, 0, width_lr, height_lr);
     checkGlError("glViewport");
+
+    RGBtoYUV(clear_color[0], clear_color[1], clear_color[2], clear_color_yuv);
+
     return true;
 }
 
@@ -134,8 +142,6 @@ void doSuperResolution(){
     uint8_t* pixels = new uint8_t[width_lr * height_lr * 4];
     glReadPixels(0, 0, width_lr, height_lr, GL_RGBA,  GL_UNSIGNED_BYTE, pixels);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
 
     int* srImgInt = superRes->DoSuperResolution(pixels);
     LOGI("did superresolution");
@@ -161,15 +167,14 @@ std::unique_ptr<int[]> doSuperResolutionHardwareBuffer(){
     return srImgyo;
 }
 
+
+
 void renderFrame() {
 
     startTime = getTimeNsec();
-
-    static float grey;
-    //grey = 1.0f;
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+    glClearColor(clear_color_yuv[0], clear_color_yuv[1], clear_color_yuv[2], 1.0f);
     checkGlError("glClearColor");
     glClear(  GL_COLOR_BUFFER_BIT);
     checkGlError("glClear");
@@ -195,17 +200,28 @@ void renderFrame() {
 
 }
 
+void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv){
+    r *= 255.0f;
+    g *= 255.0f;
+    b *= 255.0f;
+    float y =   (0.257f * r + 0.504f * g + 0.098f * b + 16.0f)  * (1.0f/255.0f);
+    float u =  (-0.148f * r - 0.291f * g + 0.439f * b + 128.0f) * (1.0f/255.0f);
+    float v =   (0.439f * r - 0.368f * g - 0.071f * b + 128.0f) * (1.0f/255.0f);
+    yuv.push_back(y);
+    yuv.push_back(u);
+    yuv.push_back(v);
+}
+
 extern "C" {
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
-    JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_getSuperResImg(JNIEnv* env, jclass obj);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_upscaleImg(JNIEnv* env, jclass obj);
 };
 
 extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
 {
     setupGraphics(width, height);
-    //renderFrame();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj)
@@ -226,12 +242,8 @@ extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES
     }
 }
 
-extern "C" JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_getSuperResImg(JNIEnv* env, jclass obj){
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_upscaleImg(JNIEnv* env, jclass obj){
     doSuperResolution();
-    //jintArray sr_img_rgb = env->NewIntArray(tflite::superresolution::kNumberOfOutputPixels);
-    //env->SetIntArrayRegion(sr_img_rgb, 0, tflite::superresolution::kNumberOfOutputPixels, img);
-    //delete[] img;
-    return nullptr;
 }
 
 

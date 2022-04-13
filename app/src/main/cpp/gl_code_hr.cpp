@@ -64,23 +64,11 @@ bool setupGraphicsHR(jint w, jint h) {
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
 
-    //gl_texture_lowRes_test = new uint8_t[360*800*4];
-    //memset(gl_texture_lowRes_test, 0xff, 360 * 800 *4);
-
-    //gl_texture_highRes_test = new int[1800*2400*4];
-    //memset(gl_texture_highRes_test, 0xff, 1800*2400*4);
-
-
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(hr_screen_vertices), hr_screen_vertices, GL_STATIC_DRAW);
-
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-
-
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     GLTools_HR::checkGlError("glVertexAttribPointer");
@@ -96,39 +84,30 @@ bool setupGraphicsHR(jint w, jint h) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-
-
     glViewport(0, 0, w, h);
     GLTools_HR::checkGlError("glViewport");
     return true;
 }
 
 bool createTextures() {
-    //LOGI("createTextures invoked");
-
-
     if(GLCode::gl_texture_lowRes == nullptr || GLCode::gl_texture_highRes == nullptr)
         return false;
-    //LOGI("upload textures");
 
     glBindTexture(GL_TEXTURE_2D, lowResTex);
     GLTools_HR::checkGlError("glBindTexture");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    //uint32_t pixel = 0xff0000ff;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, GLCode::width_lr, GLCode::height_lr, 0, GL_RGBA, GL_UNSIGNED_BYTE, GLCode::gl_texture_lowRes);
     GLTools_HR::checkGlError("glTexImage2D");
 
     glBindTexture(GL_TEXTURE_2D, highResTex);
     GLTools_HR::checkGlError("glBindTexture");
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -198,7 +177,6 @@ JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_st
 
 extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height) {
 setupGraphicsHR(width, height);
-//renderFrameHR();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_stepHR(JNIEnv * env, jclass obj) {
