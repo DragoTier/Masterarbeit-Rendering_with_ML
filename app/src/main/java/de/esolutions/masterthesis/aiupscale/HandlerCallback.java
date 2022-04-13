@@ -1,5 +1,4 @@
-package com.android.gl2jni;
-
+package de.esolutions.masterthesis.aiupscale;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;

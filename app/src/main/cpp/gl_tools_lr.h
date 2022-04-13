@@ -5,7 +5,7 @@
 #define HELLO_GL2_GL_TOOLS_LR_H
 
 #include <ctime>
-#define  LOG_TAG    "libgl2jni"
+#define  LOG_TAG    "libgles32_escpn"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
@@ -107,17 +107,16 @@ void dumpBuffer(AHardwareBuffer &hardware_buffer){
     AHardwareBuffer_unlock(&hardware_buffer, nullptr);
 }
 }//namespace
-/* FILE* pFile2;
- pFile2 = fopen("/data/data/com.android.gl2jni/buffer_file_3.data", "wb");
- fwrite(&srImgInt[0], 1, 200*200*4, pFile2);
- fclose(pFile2); */
+
 
 /*  FILE* pFile;
-  pFile = fopen("/data/data/com.android.gl2jni/buffer_file_2.data", "wb");
+  pFile = fopen("/data/data/de.esolutions.masterthesis.aiupscale/buffer_file_2.data", "wb");
+  fwrite(pixels, 1, width_lr*height_lr*4, pFile);
+  fclose(pFile); */
+
+/*  FILE* pFile;
+  pFile = fopen("/data/data/de.esolutions.masterthesis.aiupscale/buffer_file_2.data", "wb");
   fwrite(pixels, 1, width*height*4, pFile);
   fclose(pFile); */
 
-/*
-
- */
 #endif //HELLO_GL2_GL_TOOLS_LR_H

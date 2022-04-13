@@ -7,7 +7,7 @@ android {
     ndkVersion '23.1.7779620'
     
     defaultConfig {
-        applicationId 'com.android.gl2jni'
+        applicationId 'de.esolutions.masterthesis.aiupscale'
         minSdkVersion 29
         targetSdkVersion 32
         externalNativeBuild {

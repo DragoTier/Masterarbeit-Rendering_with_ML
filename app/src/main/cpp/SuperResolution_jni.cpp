@@ -28,7 +28,7 @@ namespace tflite {
 namespace superresolution {
 
 extern "C" JNIEXPORT jintArray
-Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(
+Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_superResolutionFromJNI(
     JNIEnv *env, jobject thiz, jlong native_handle, jintArray low_res_rgb) {
   /*
   jint *lr_img_rgb = env->GetIntArrayElements(low_res_rgb, NULL);
@@ -55,7 +55,7 @@ Java_com_android_gl2jni_GL2JNIActivity_superResolutionFromJNI(
 }
 
 extern "C" JNIEXPORT jlong
-Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI( JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
+Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_initWithByteBufferFromJNI( JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
   const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
   jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
   SuperResolution *super_resolution = new SuperResolution( model_data, static_cast<size_t>(model_size_bytes), use_gpu);
@@ -70,7 +70,7 @@ Java_com_android_gl2jni_GL2JNIActivity_initWithByteBufferFromJNI( JNIEnv *env, j
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_android_gl2jni_GL2JNIActivity_deinitFromJNI( JNIEnv *env, jobject thiz, jlong native_handle) {
+Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_deinitFromJNI( JNIEnv *env, jobject thiz, jlong native_handle) {
   delete reinterpret_cast<SuperResolution*>(native_handle);
 }
 

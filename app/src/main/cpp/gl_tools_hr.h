@@ -7,7 +7,7 @@
 
 #include <ctime>
 
-#define  LOG_TAG    "libgl2jni"
+#define  LOG_TAG    "libgles32_escpn"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 

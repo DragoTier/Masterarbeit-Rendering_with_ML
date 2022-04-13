@@ -104,12 +104,12 @@ bool setupGraphicsHR(jint w, jint h) {
 }
 
 bool createTextures() {
-    LOGI("createTextures invoked");
+    //LOGI("createTextures invoked");
 
 
     if(GLCode::gl_texture_lowRes == nullptr || GLCode::gl_texture_highRes == nullptr)
         return false;
-    LOGI("upload textures");
+    //LOGI("upload textures");
 
     glBindTexture(GL_TEXTURE_2D, lowResTex);
     GLTools_HR::checkGlError("glBindTexture");
@@ -135,7 +135,7 @@ bool createTextures() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,tflite::superresolution::kOutputImageWidth, tflite::superresolution::kOutputImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, GLCode::gl_texture_highRes);
     GLTools_HR::checkGlError("glTexImage2D");
 
-    /*
+
     if(GLCode::gl_texture_lowRes != nullptr) {
         delete[] GLCode::gl_texture_lowRes;
         GLCode::gl_texture_lowRes = nullptr;
@@ -143,7 +143,7 @@ bool createTextures() {
     if(GLCode::gl_texture_highRes != nullptr){
         delete[] GLCode::gl_texture_highRes;
         GLCode::gl_texture_highRes = nullptr;
-    } */
+    }
 
     return true;
 }
@@ -192,16 +192,16 @@ void renderFrameHR() {
 
 
 extern "C" {
-JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height);
-JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_stepHR(JNIEnv * env, jclass obj);
+JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height);
+JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_stepHR(JNIEnv * env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height) {
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height) {
 setupGraphicsHR(width, height);
 //renderFrameHR();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_stepHR(JNIEnv * env, jclass obj) {
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_stepHR(JNIEnv * env, jclass obj) {
 renderFrameHR();
 }
 

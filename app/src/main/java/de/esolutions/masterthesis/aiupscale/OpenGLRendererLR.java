@@ -1,5 +1,4 @@
-package com.android.gl2jni;
-
+package de.esolutions.masterthesis.aiupscale;
 import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
 

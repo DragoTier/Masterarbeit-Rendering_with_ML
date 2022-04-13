@@ -1,21 +1,3 @@
-/*
- * Copyright (C) 2009 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// OpenGL ES 3.0 code
-
 #include <jni.h>
 #include <android/log.h>
 
@@ -40,7 +22,7 @@
 #include "SuperResolution.h"
 #include "Shader_lr.h"
 
-#define  LOG_TAG    "libgl2jni"
+#define  LOG_TAG    "libgles32_escpn"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
@@ -153,10 +135,7 @@ void doSuperResolution(){
     glReadPixels(0, 0, width_lr, height_lr, GL_RGBA,  GL_UNSIGNED_BYTE, pixels);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    FILE* pFile;
-    pFile = fopen("/data/data/com.android.gl2jni/buffer_file_2.data", "wb");
-    fwrite(pixels, 1, width_lr*height_lr*4, pFile);
-    fclose(pFile);
+
 
     int* srImgInt = superRes->DoSuperResolution(pixels);
     LOGI("did superresolution");
@@ -217,24 +196,24 @@ void renderFrame() {
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv * env, jclass obj);
-    JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
-    JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_step(JNIEnv * env, jclass obj);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
+    JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
 {
     setupGraphics(width, height);
     //renderFrame();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_step(JNIEnv * env, jclass obj)
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_step(JNIEnv * env, jclass obj)
 {
     renderFrame();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle){
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle){
 
     super_resolution_native_handle = native_handle;
     superRes = reinterpret_cast<tflite::superresolution::SuperResolution*> (super_resolution_native_handle);
@@ -247,7 +226,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_android_gl2jni_GL2JNILib_setNativeHan
     }
 }
 
-extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
+extern "C" JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
     doSuperResolution();
     //jintArray sr_img_rgb = env->NewIntArray(tflite::superresolution::kNumberOfOutputPixels);
     //env->SetIntArrayRegion(sr_img_rgb, 0, tflite::superresolution::kNumberOfOutputPixels, img);
@@ -258,13 +237,5 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_android_gl2jni_GL2JNILib_getSupe
 
 } //namespace
 
-/* FILE* pFile2;
- pFile2 = fopen("/data/data/com.android.gl2jni/buffer_file_3.data", "wb");
- fwrite(&srImgInt[0], 1, 200*200*4, pFile2);
- fclose(pFile2); */
 
-/*  FILE* pFile;
-  pFile = fopen("/data/data/com.android.gl2jni/buffer_file_2.data", "wb");
-  fwrite(pixels, 1, width*height*4, pFile);
-  fclose(pFile); */
 

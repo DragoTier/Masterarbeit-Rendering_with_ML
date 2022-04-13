@@ -6,7 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:visibility="visible"
-    tools:context="com.android.gl2jni.GL2JNIActivity"
+    tools:context="de.esolutions.masterthesis.aiupscale.GL2JNIActivity"
     tools:visibility="visible">
 
 
@@ -19,13 +19,14 @@
         android:visibility="visible"
         tools:visibility="visible" />
 
+    <!--
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="1080px"
         android:layout_height="2400px"
-        android:src="@drawable/ic_launcher"
         android:visibility="visible"
         tools:visibility="visible" />
+    -->
 
     <android.opengl.GLSurfaceView
         android:id="@+id/highResView"
@@ -43,3 +44,4 @@ android:layout_marginBottom="45dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+-->

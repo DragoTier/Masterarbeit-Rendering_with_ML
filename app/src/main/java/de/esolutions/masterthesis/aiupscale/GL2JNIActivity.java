@@ -1,40 +1,18 @@
-/*
- * Copyright (C) 2007 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.android.gl2jni;
+package de.esolutions.masterthesis.aiupscale;
 
 import android.Manifest;
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
-
 import android.content.res.AssetFileDescriptor;
-import android.widget.ImageView;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
-//import org.tensorflow.lite.nnapi.NnApiDelegate;
 
 public class GL2JNIActivity extends Activity {
-
 
     static {
         System.loadLibrary("gl2jni");
@@ -61,8 +39,8 @@ public class GL2JNIActivity extends Activity {
         setContentView(R.layout.activity_main);
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-        ImageView superResolutionImageView = (ImageView) findViewById(R.id.imageView);
-        superResolutionImageView.setImageDrawable(null);
+       // ImageView superResolutionImageView = (ImageView) findViewById(R.id.imageView);
+       // superResolutionImageView.setImageDrawable(null);
         Object obj = new Object();
 
         superResolutionNativeHandle = initTFLiteInterpreter(true);
@@ -71,7 +49,7 @@ public class GL2JNIActivity extends Activity {
         viewLR.setEGLContextClientVersion(3);
 
         OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj);
-        rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
+        //rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
         viewLR.setRenderer(rendererLR);
 
         viewHR = (GLSurfaceView) findViewById(R.id.highResView); //new GL2JNIView(getApplication());
