@@ -15,7 +15,7 @@ import java.nio.channels.FileChannel;
 public class GL2JNIActivity extends Activity {
 
     static {
-        System.loadLibrary("gl2jni");
+        System.loadLibrary("gl3aiupscale");
     }
 
     private GLSurfaceView viewLR;

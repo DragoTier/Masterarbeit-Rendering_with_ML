@@ -34,7 +34,7 @@ add_subdirectory(
 
 
 #GL
-add_library(gl2jni SHARED
+add_library(gl3aiupscale SHARED
         gl_code_lr.cpp
         gl_code_hr.cpp
         Shader_lr.h
@@ -45,16 +45,16 @@ add_library(gl2jni SHARED
         SuperResolution_jni.cpp
         SuperResolution.cpp)
 
-target_include_directories(gl2jni PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/tf_test2/tensorflow_src")
-target_include_directories(gl2jni PUBLIC "${GLM_SOURCE_DIR}")
+target_include_directories(gl3aiupscale PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/tf_test2/tensorflow_src")
+target_include_directories(gl3aiupscale PUBLIC "${GLM_SOURCE_DIR}")
 
 # add lib dependencies
-target_link_libraries(  gl2jni
+target_link_libraries(  gl3aiupscale
                         tensorflow-lite
                         glm)
 
 
-target_link_libraries(gl2jni
+target_link_libraries(gl3aiupscale
                       android
                       log
                       EGL
@@ -62,7 +62,7 @@ target_link_libraries(gl2jni
                       )
 
 target_link_libraries(
-        gl2jni
+        gl3aiupscale
         neuralnetworks
         android
         ${log-lib}

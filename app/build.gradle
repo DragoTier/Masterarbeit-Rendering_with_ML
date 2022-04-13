@@ -42,14 +42,6 @@ android {
         noCompress "tflite"
     }
 
-    sourceSets {
-        main {
-            // let gradle pack the shared library into apk
-            //jniLibs.srcDirs = ['../libraries/tensorflowlite/jni',
-           //                    '../libraries/tensorflowlite-gpu/jni']
-        }
-    }
-
     externalNativeBuild {
         cmake {
             version '3.18.1'
