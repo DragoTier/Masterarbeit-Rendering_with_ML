@@ -23,11 +23,7 @@ public class MainActivity extends Activity {
     private static final String TAG = "SuperResolution";
     private static final String MODEL_NAME = "model_from_h5_edge.tflite";
 
-    private static final int LR_IMAGE_HEIGHT = 800;
-    private static final int LR_IMAGE_WIDTH = 360;
     private static final int UPSCALE_FACTOR = 3;
-    private static final int SR_IMAGE_HEIGHT = LR_IMAGE_HEIGHT * UPSCALE_FACTOR;
-    private static final int SR_IMAGE_WIDTH = LR_IMAGE_WIDTH * UPSCALE_FACTOR;
 
     private MappedByteBuffer model;
     private long superResolutionNativeHandle = 0;
@@ -47,7 +43,6 @@ public class MainActivity extends Activity {
         GLES32JNILib.setNativeHandle(superResolutionNativeHandle);
         viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
         viewLR.setEGLContextClientVersion(3);
-
         OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj);
         //rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
         viewLR.setRenderer(rendererLR);

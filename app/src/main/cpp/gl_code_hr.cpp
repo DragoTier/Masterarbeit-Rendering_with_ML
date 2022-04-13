@@ -120,7 +120,7 @@ bool createTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     //uint32_t pixel = 0xff0000ff;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 360, 800, 0, GL_RGBA, GL_UNSIGNED_BYTE, GLCode::gl_texture_lowRes);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, GLCode::width_lr, GLCode::height_lr, 0, GL_RGBA, GL_UNSIGNED_BYTE, GLCode::gl_texture_lowRes);
     GLTools_HR::checkGlError("glTexImage2D");
 
     glBindTexture(GL_TEXTURE_2D, highResTex);

@@ -44,12 +44,13 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
             {
                 nnapi_object = NnApiImplementation();
                 StatefulNnApiDelegate::Options nnapi_options = StatefulNnApiDelegate::Options();
-               // nnapi_options.execution_preference = StatefulNnApiDelegate::Options::kSustainedSpeed;
+                //nnapi_options.execution_preference = StatefulNnApiDelegate::Options::kSustainedSpeed;
                 //nnapi_options.max_number_delegated_partitions = 0;
-                nnapi_options.allow_fp16 = true;
+                //nnapi_options.allow_fp16 = true;
                 //nnapi_options.use_burst_computation = true;
+               // nnapi_options.accelerator_name = "qti-dsp";
                 //nnapi_options.accelerator_name = "google-armnn";
-                //nnapi_options.accelerator_name = "google-edgetpu";
+                nnapi_options.accelerator_name = "google-edgetpu";
                 //nnapi_options.disallow_nnapi_cpu = true;
                 delegate_ = new StatefulNnApiDelegate(nnapi_object, nnapi_options);
                 TfLiteInterpreterOptionsAddDelegate(options_, delegate_);

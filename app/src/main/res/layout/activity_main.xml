@@ -15,7 +15,7 @@
         android:layout_marginTop="100px"
         android:layout_marginLeft="100px"
         android:layout_width="360px"
-        android:layout_height="800px"
+        android:layout_height="640px"
         android:visibility="visible"
         tools:visibility="visible" />
 
@@ -31,7 +31,7 @@
     <android.opengl.GLSurfaceView
         android:id="@+id/highResView"
         android:layout_width="1080px"
-        android:layout_height="2400px"
+        android:layout_height="1920px"
         android:visibility="visible"
         tools:visibility="visible" />
 </RelativeLayout>
