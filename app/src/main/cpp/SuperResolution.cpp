@@ -22,7 +22,7 @@ const NnApi* nnapi_object;
 StatefulNnApiDelegate* delegate;
 
 SuperResolution::SuperResolution(const void* model_data, size_t model_size,
-                                 bool use_nnapi) {
+                                 int use_accelerator) {
     // Load the model
     model_ = TfLiteModelCreate(model_data, model_size);
     if (!model_) {
@@ -35,9 +35,12 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
     //options->use_nnapi = true;
     options_ = options;
 
-    // add nnapi delegate //Add GPU Delegate
-    switch (1) {
+    // 0 => CPU, 1 => NNAPI, 2 => GPU
+    switch (use_accelerator) {
         case 0:
+            TfLiteInterpreterOptionsSetNumThreads(options_, kThreadNum);
+            break;
+        case 1:
             {
                 nnapi_object = NnApiImplementation();
                 StatefulNnApiDelegate::Options nnapi_options = StatefulNnApiDelegate::Options();
@@ -52,7 +55,7 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
                 TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
                 break;
             }
-        case 1:
+        case 2:
         {
             TfLiteGpuDelegateOptionsV2 default_options = TfLiteGpuDelegateOptionsV2Default();
             default_options.max_delegated_partitions = 3;
@@ -62,7 +65,7 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
             TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
             break;
         }
-        case 2:
+        default:
             TfLiteInterpreterOptionsSetNumThreads(options_, kThreadNum);
             break;
     }

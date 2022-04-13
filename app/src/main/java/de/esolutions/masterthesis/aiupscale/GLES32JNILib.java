@@ -1,7 +1,7 @@
 package de.esolutions.masterthesis.aiupscale;
 // Wrapper for native library
 
-public class GL2JNILib {
+public class GLES32JNILib {
 
     /**
     * @param width the current view width

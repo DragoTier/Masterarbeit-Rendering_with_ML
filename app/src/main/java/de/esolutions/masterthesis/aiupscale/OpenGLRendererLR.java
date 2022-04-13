@@ -1,10 +1,7 @@
 package de.esolutions.masterthesis.aiupscale;
-import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
 
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -21,8 +18,8 @@ public class OpenGLRendererLR implements GLSurfaceView.Renderer {
     @Override
     public void onDrawFrame(GL10 gl) {
         synchronized (obj){
-            GL2JNILib.step();
-            int[] img = GL2JNILib.getSuperResImg();
+            GLES32JNILib.step();
+            int[] img = GLES32JNILib.getSuperResImg();
         }
 
 
@@ -35,7 +32,7 @@ public class OpenGLRendererLR implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GL2JNILib.init(width, height);
+        GLES32JNILib.init(width, height);
     }
 
     @Override

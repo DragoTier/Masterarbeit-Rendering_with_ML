@@ -14,7 +14,7 @@
           android:name="libOpenCL-pixel.so"
           android:required="false"/>
 
-    <activity android:name="GL2JNIActivity"
+    <activity android:name=".MainActivity"
               android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
               android:exported="true"
               android:launchMode="standard"

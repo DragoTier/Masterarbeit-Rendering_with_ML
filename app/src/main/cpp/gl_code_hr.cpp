@@ -192,16 +192,16 @@ void renderFrameHR() {
 
 
 extern "C" {
-JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height);
-JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_stepHR(JNIEnv * env, jclass obj);
+JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height);
+JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_stepHR(JNIEnv * env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height) {
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_initHR(JNIEnv * env, jclass obj, jint width, jint height) {
 setupGraphicsHR(width, height);
 //renderFrameHR();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_stepHR(JNIEnv * env, jclass obj) {
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_stepHR(JNIEnv * env, jclass obj) {
 renderFrameHR();
 }
 

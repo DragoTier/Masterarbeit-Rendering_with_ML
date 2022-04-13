@@ -12,7 +12,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 
-public class GL2JNIActivity extends Activity {
+public class MainActivity extends Activity {
 
     static {
         System.loadLibrary("gl3aiupscale");
@@ -42,9 +42,9 @@ public class GL2JNIActivity extends Activity {
        // ImageView superResolutionImageView = (ImageView) findViewById(R.id.imageView);
        // superResolutionImageView.setImageDrawable(null);
         Object obj = new Object();
-
-        superResolutionNativeHandle = initTFLiteInterpreter(true);
-        GL2JNILib.setNativeHandle(superResolutionNativeHandle);
+        int tflite_accelerator = 1;
+        superResolutionNativeHandle = initTFLiteInterpreter(tflite_accelerator);
+        GLES32JNILib.setNativeHandle(superResolutionNativeHandle);
         viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
         viewLR.setEGLContextClientVersion(3);
 
@@ -64,7 +64,7 @@ public class GL2JNIActivity extends Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if(requestCode == PERMISSION_REQUEST_CODE){
-            //muss nicht gefüllt werden
+            //muss nicht gefuellt werden
         }
     }
 
@@ -79,13 +79,13 @@ public class GL2JNIActivity extends Activity {
         }
     }
 
-    private long initTFLiteInterpreter(boolean useNNAPI) {
+    private long initTFLiteInterpreter(int useAccelerator) {
         try {
             model = loadModelFile();
         } catch (IOException e) {
             Log.e(TAG, "Fail to load model", e);
         }
-        return initWithByteBufferFromJNI(model, useNNAPI);
+        return initWithByteBufferFromJNI(model, useAccelerator);
     }
 
     @Override
@@ -103,17 +103,10 @@ public class GL2JNIActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        deinit();
-    }
-
-    private void deinit() {
         deinitFromJNI(superResolutionNativeHandle);
     }
 
-    private native int[] superResolutionFromJNI(long superResolutionNativeHandle, int[] lowResRGB);
-
-    private native long initWithByteBufferFromJNI(MappedByteBuffer modelBuffer, boolean useGPU);
-
+    private native long initWithByteBufferFromJNI(MappedByteBuffer modelBuffer, int useAccelerator);
     private native void deinitFromJNI(long superResolutionNativeHandle);
 }
 

@@ -27,38 +27,11 @@
 namespace tflite {
 namespace superresolution {
 
-extern "C" JNIEXPORT jintArray
-Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_superResolutionFromJNI(
-    JNIEnv *env, jobject thiz, jlong native_handle, jintArray low_res_rgb) {
-  /*
-  jint *lr_img_rgb = env->GetIntArrayElements(low_res_rgb, NULL);
-
-  if (!reinterpret_cast<SuperResolution *>(native_handle)
-           ->IsInterpreterCreated()) {
-    return nullptr;
-  }
-
-  // Generate super resolution image
-  auto sr_rgb_colors = reinterpret_cast<SuperResolution *>(native_handle)
-                           ->DoSuperResolution(static_cast<int *>(lr_img_rgb));
-  if (!sr_rgb_colors) {
-    return nullptr;  // super resolution failed
-  }
-  jintArray sr_img_rgb = env->NewIntArray(kNumberOfOutputPixels);
-  env->SetIntArrayRegion(sr_img_rgb, 0, kNumberOfOutputPixels,
-                         sr_rgb_colors.get());
-
-  // Clean up before we return
-  env->ReleaseIntArrayElements(low_res_rgb, lr_img_rgb, JNI_COMMIT);
- */
-  return nullptr;
-}
-
 extern "C" JNIEXPORT jlong
-Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_initWithByteBufferFromJNI( JNIEnv *env, jobject thiz, jobject model_buffer, jboolean use_gpu) {
+Java_de_esolutions_masterthesis_aiupscale_MainActivity_initWithByteBufferFromJNI(JNIEnv *env, jobject thiz, jobject model_buffer, jint useAccelerator) {
   const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
   jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
-  SuperResolution *super_resolution = new SuperResolution( model_data, static_cast<size_t>(model_size_bytes), use_gpu);
+  SuperResolution *super_resolution = new SuperResolution( model_data, static_cast<size_t>(model_size_bytes), useAccelerator);
   if (super_resolution->IsInterpreterCreated()) {
     LOGI("Interpreter is created successfully");
 
@@ -70,7 +43,7 @@ Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_initWithByteBufferFromJ
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_de_esolutions_masterthesis_aiupscale_GL2JNIActivity_deinitFromJNI( JNIEnv *env, jobject thiz, jlong native_handle) {
+Java_de_esolutions_masterthesis_aiupscale_MainActivity_deinitFromJNI(JNIEnv *env, jobject thiz, jlong native_handle) {
   delete reinterpret_cast<SuperResolution*>(native_handle);
 }
 

@@ -196,24 +196,24 @@ void renderFrame() {
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
-    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_step(JNIEnv * env, jclass obj);
-    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
-    JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
+    JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_getSuperResImg(JNIEnv* env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
 {
     setupGraphics(width, height);
     //renderFrame();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_step(JNIEnv * env, jclass obj)
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj)
 {
     renderFrame();
 }
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle){
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle){
 
     super_resolution_native_handle = native_handle;
     superRes = reinterpret_cast<tflite::superresolution::SuperResolution*> (super_resolution_native_handle);
@@ -226,7 +226,7 @@ extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2J
     }
 }
 
-extern "C" JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GL2JNILib_getSuperResImg(JNIEnv* env, jclass obj){
+extern "C" JNIEXPORT jintArray JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_getSuperResImg(JNIEnv* env, jclass obj){
     doSuperResolution();
     //jintArray sr_img_rgb = env->NewIntArray(tflite::superresolution::kNumberOfOutputPixels);
     //env->SetIntArrayRegion(sr_img_rgb, 0, tflite::superresolution::kNumberOfOutputPixels, img);

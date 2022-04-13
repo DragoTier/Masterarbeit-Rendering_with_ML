@@ -6,7 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:visibility="visible"
-    tools:context="de.esolutions.masterthesis.aiupscale.GL2JNIActivity"
+    tools:context="de.esolutions.masterthesis.aiupscale.MainActivity"
     tools:visibility="visible">
 
 

@@ -1,19 +1,3 @@
-/*
- * Copyright 2020 The TensorFlow Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #ifndef NATIVE_LIBS_SUPERRESOLUTION_H
 #define NATIVE_LIBS_SUPERRESOLUTION_H
 
@@ -49,21 +33,15 @@ const int kNumberOfOutputPixels = kOutputImageHeight * kOutputImageWidth;
 
 class SuperResolution {
   public:
-    SuperResolution(const void* model_data, size_t model_size, bool use_nnapi);
+    SuperResolution(const void* model_data, size_t model_size, int use_accelerator);
     ~SuperResolution();
     bool IsInterpreterCreated();
-    // DoSuperResolution() performs super resolution on a low resolution image. It
-    // returns a valid pointer if successful and nullptr if unsuccessful.
-    // lr_img_rgb: the pointer to the RGB array extracted from low resolution
-    // image
-    int* DoSuperResolution(uint8_t* lr_img_rgb);
 
+    int* DoSuperResolution(uint8_t* lr_img_rgb);
     std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
-    std::unique_ptr<int[]> DoSuperResolutionCNN(float *lr_img_rgb);
     bool isResponding();
 
   private:
-    // TODO: use unique_ptr
     TfLiteInterpreter* interpreter_;
     TfLiteModel* model_ = nullptr;
     TfLiteInterpreterOptions* options_ = nullptr;
