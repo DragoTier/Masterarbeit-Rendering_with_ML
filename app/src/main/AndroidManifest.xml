@@ -8,7 +8,7 @@
       android:fullBackupContent="false"
       android:icon="@mipmap/ic_launcher"
       android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-      android:label="@string/gl2jni_activity">
+      android:label="@string/gles32jni_activity">
 
      <uses-native-library
           android:name="libOpenCL-pixel.so"
