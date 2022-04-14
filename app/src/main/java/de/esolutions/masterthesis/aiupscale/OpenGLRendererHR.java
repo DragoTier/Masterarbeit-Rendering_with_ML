@@ -14,6 +14,7 @@ public class OpenGLRendererHR implements GLSurfaceView.Renderer {
     public OpenGLRendererHR(Object obj){
         this.obj = obj;
     }
+
     @Override
     public void onDrawFrame(GL10 gl) {
         synchronized (obj){

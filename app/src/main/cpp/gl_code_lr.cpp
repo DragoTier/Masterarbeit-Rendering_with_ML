@@ -1,21 +1,21 @@
 #include <jni.h>
 #include <android/log.h>
-
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-
-//#include <android/hardware_buffer_jni.h>
 #include <android/hardware_buffer.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <android/asset_manager.h>
-#include <GLES3/gl31.h>
+#include <GLES3/gl32.h>
 #include <GLES3/gl3ext.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+//#include <assimp/port/AndroidJNI/AndroidJNIIOSystem.h>
+//#include <assimp/Importer.hpp>
+//#include <assimp/scene.h>
+//#include <assimp/postprocess.h>
 
 #include "gl_tools_lr.h"
 #include "gl_texture_model.h"
@@ -128,7 +128,17 @@ bool setupGraphics(int w, int h) {
     glViewport(0, 0, width_lr, height_lr);
     checkGlError("glViewport");
 
+    //prepare clear color
     RGBtoYUV(clear_color[0], clear_color[1], clear_color[2], clear_color_yuv);
+
+    //assimp
+
+   // Assimp::Importer* importer = new Assimp::Importer();
+    //Assimp::AndroidJNIIOSystem *ioSystem = new Assimp::AndroidJNIIOSystem(activity);
+   /* if ( nullptr != iosSystem ) {
+        importer->SetIOHandler(ioSystem);
+    } */
+
 
     return true;
 }

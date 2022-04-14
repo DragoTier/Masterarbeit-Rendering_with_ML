@@ -32,6 +32,17 @@ add_subdirectory(
         "${GLM_SOURCE_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}/glm" EXCLUDE_FROM_ALL)
 
+#ASSIMP
+set(ASSIMP_SOURCE_DIR "" CACHE PATH
+        "Directory containing assimp")
+if(NOT ASSIMP_SOURCE_DIR)
+        get_filename_component(ASSIMP_SOURCE_DIR
+                "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/assimp/" ABSOLUTE)
+endif()
+
+add_subdirectory(
+        "${ASSIMP_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/assimp" EXCLUDE_FROM_ALL)
 
 #GL
 add_library(gl3aiupscale SHARED
@@ -47,11 +58,13 @@ add_library(gl3aiupscale SHARED
 
 target_include_directories(gl3aiupscale PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/tf_test2/tensorflow_src")
 target_include_directories(gl3aiupscale PUBLIC "${GLM_SOURCE_DIR}")
+target_include_directories(gl3aiupscale PUBLIC "${ASSIMP_SOURCE_DIR}")
 
 # add lib dependencies
 target_link_libraries(  gl3aiupscale
                         tensorflow-lite
-                        glm)
+                        glm
+                        assimp)
 
 
 target_link_libraries(gl3aiupscale
