@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
     private GLSurfaceView viewHR;
     private static final String TAG = "SuperResolution";
     private static final String MODEL_NAME = "model_from_h5_edge.tflite";
+    private static final String OBJ_NAME = "bunny.obj";
 
     private static final int UPSCALE_FACTOR = 3;
 
@@ -43,7 +44,8 @@ public class MainActivity extends Activity {
         GLES32JNILib.setNativeHandle(superResolutionNativeHandle);
         viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
         viewLR.setEGLContextClientVersion(3);
-        OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj);
+        MappedByteBuffer obj_Model = loadFile(OBJ_NAME);
+        OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj, obj_Model);
         //rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
         viewLR.setRenderer(rendererLR);
 
@@ -63,23 +65,22 @@ public class MainActivity extends Activity {
         }
     }
 
-    private MappedByteBuffer loadModelFile() throws IOException {
+    private MappedByteBuffer loadFile(String file) {
         try (AssetFileDescriptor fileDescriptor =
-                     AssetsUtil.getAssetFileDescriptorOrCached(getApplicationContext(), MODEL_NAME);
+                     AssetsUtil.getAssetFileDescriptorOrCached(getApplicationContext(), file);
              FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor())) {
             FileChannel fileChannel = inputStream.getChannel();
             long startOffset = fileDescriptor.getStartOffset();
             long declaredLength = fileDescriptor.getDeclaredLength();
             return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+        } catch (IOException e){
+            Log.e(TAG, "Fail to load file", e);
+            return null;
         }
     }
 
     private long initTFLiteInterpreter(int useAccelerator) {
-        try {
-            model = loadModelFile();
-        } catch (IOException e) {
-            Log.e(TAG, "Fail to load model", e);
-        }
+        model = loadFile(MODEL_NAME);
         return initWithByteBufferFromJNI(model, useAccelerator);
     }
 

@@ -3,16 +3,20 @@ import android.opengl.GLSurfaceView;
 
 import android.os.Handler;
 
+import java.nio.MappedByteBuffer;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class OpenGLRendererLR implements GLSurfaceView.Renderer {
 
     private final Object obj;
+    private final MappedByteBuffer obj_model;
     public Handler handler;
 
-    OpenGLRendererLR(Object obj){
+    OpenGLRendererLR(Object obj, MappedByteBuffer obj_model){
         this.obj = obj;
+        this.obj_model = obj_model;
     }
 
     @Override
@@ -32,7 +36,7 @@ public class OpenGLRendererLR implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GLES32JNILib.init(width, height);
+        GLES32JNILib.init(width, height, obj_model);
     }
 
     @Override

@@ -3,7 +3,7 @@
 //#include <android/NeuralNetworks.h>
 #include <tensorflow/lite/nnapi/nnapi_implementation.h>
 #include <android/log.h>
-#include <math.h>
+#include <cmath>
 
 #include <fstream>
 #include <iostream>
@@ -50,7 +50,7 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
                 //nnapi_options.use_burst_computation = true;
                // nnapi_options.accelerator_name = "qti-dsp";
                 //nnapi_options.accelerator_name = "google-armnn";
-                nnapi_options.accelerator_name = "google-edgetpu";
+                //nnapi_options.accelerator_name = "google-edgetpu";
                 //nnapi_options.disallow_nnapi_cpu = true;
                 delegate_ = new StatefulNnApiDelegate(nnapi_object, nnapi_options);
                 TfLiteInterpreterOptionsAddDelegate(options_, delegate_);

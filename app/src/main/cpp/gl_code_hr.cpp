@@ -6,9 +6,9 @@
 #include <EGL/eglext.h>
 #include <android/hardware_buffer.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 #include <android/asset_manager.h>
 #include <GLES3/gl32.h>
 #include <GLES3/gl3ext.h>

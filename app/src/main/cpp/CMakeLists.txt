@@ -40,6 +40,8 @@ if(NOT ASSIMP_SOURCE_DIR)
                 "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/assimp/" ABSOLUTE)
 endif()
 
+#set(ASSIMP_INJECT_DEBUG_POSTFIX OFF)
+
 add_subdirectory(
         "${ASSIMP_SOURCE_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}/assimp" EXCLUDE_FROM_ALL)
@@ -53,6 +55,10 @@ add_library(gl3aiupscale SHARED
         gl_tools_lr.h
         gl_tools_hr.h
         gl_texture_model.h
+        Assimp_Mesh.cpp
+        Assimp_Mesh.h
+        Assimp_Model.cpp
+        Assimp_Model.h
         SuperResolution_jni.cpp
         SuperResolution.cpp)
 

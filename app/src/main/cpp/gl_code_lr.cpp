@@ -1,26 +1,23 @@
-#include <jni.h>
+ #include <jni.h>
 #include <android/log.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <android/hardware_buffer.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 #include <android/asset_manager.h>
 #include <GLES3/gl32.h>
 #include <GLES3/gl3ext.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-//#include <assimp/port/AndroidJNI/AndroidJNIIOSystem.h>
-//#include <assimp/Importer.hpp>
-//#include <assimp/scene.h>
-//#include <assimp/postprocess.h>
 
 #include "gl_tools_lr.h"
 #include "gl_texture_model.h"
 #include "SuperResolution.h"
 #include "Shader_lr.h"
+#include "Assimp_Model.h"
 
 #define  LOG_TAG    "libgles32_escpn"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
@@ -49,6 +46,9 @@ int* gl_texture_highRes = nullptr;
 int width_lr = 0;
 int height_lr = 0;
 
+//Assimp model
+AssimpModelLoader::Assimp_Model* model = nullptr;
+
 
 AHardwareBuffer* hardware_buffer = nullptr;
 EGLImageKHR imageKHR;
@@ -60,7 +60,7 @@ int64_t endTime;
 
 void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv);
 
-bool setupGraphics(int w, int h) {
+bool setupGraphics(int w, int h, const void* model_data, size_t model_size) {
     printGLString("Version", GL_VERSION);
     printGLString("Vendor", GL_VENDOR);
     printGLString("Renderer", GL_RENDERER);
@@ -132,13 +132,7 @@ bool setupGraphics(int w, int h) {
     RGBtoYUV(clear_color[0], clear_color[1], clear_color[2], clear_color_yuv);
 
     //assimp
-
-   // Assimp::Importer* importer = new Assimp::Importer();
-    //Assimp::AndroidJNIIOSystem *ioSystem = new Assimp::AndroidJNIIOSystem(activity);
-   /* if ( nullptr != iosSystem ) {
-        importer->SetIOHandler(ioSystem);
-    } */
-
+    model = new AssimpModelLoader::Assimp_Model(model_data, model_size);
 
     return true;
 }
@@ -192,20 +186,30 @@ void renderFrame() {
     glUseProgram(shaderProgramLR);
     checkGlError("glUseProgram");
 
-    glVertexAttribPointer(vPositionHandleLR, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
+   /* glVertexAttribPointer(vPositionHandleLR, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
     checkGlError("glVertexAttribPointer");
     glEnableVertexAttribArray(vPositionHandleLR);
-    checkGlError("glEnableVertexAttribArray");
-    rotation += 10.0f;
-    glm ::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0, 0.0, 1.0));
+    checkGlError("glEnableVertexAttribArray"); */
+    rotation += 5.0f;
+    glm ::mat4 mat_model = glm::mat4(1.0f);
+    mat_model = glm::rotate(mat_model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+    mat_model = glm::translate(mat_model, glm::vec3(0.0f, -0.5f, 0.0f));
+    mat_model = glm::scale(mat_model, glm::vec3(4.0f));
+    glm::mat4 mat_view = glm::mat4(1.0f);
+    mat_view = glm::translate(mat_view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::mat4 mat_proj = glm::perspective(glm::radians(45.0f), (float)width_lr/(float)height_lr, 0.1f, 100.0f);
 
-    unsigned int transformLoc = glGetUniformLocation(shaderProgramLR, "transform");
-    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+    unsigned int transformLoc = glGetUniformLocation(shaderProgramLR, "model");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat_model));
+    transformLoc = glGetUniformLocation(shaderProgramLR, "view");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat_view));
+    transformLoc = glGetUniformLocation(shaderProgramLR, "projection");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat_proj));
     //GLenum buffers[]{ GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
     //glDrawBuffers(2, buffers);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    model->Draw(shaderProgramLR);
     checkGlError("glDrawArrays");
 
 }
@@ -223,15 +227,17 @@ void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv){
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height, jobject model_buffer);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_upscaleImg(JNIEnv* env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height)
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height, jobject model_buffer)
 {
-    setupGraphics(width, height);
+    const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
+    jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
+    setupGraphics(width, height, model_data, static_cast<size_t>(model_size_bytes));
 }
 
 extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj)
