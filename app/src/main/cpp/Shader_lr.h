@@ -7,12 +7,18 @@
 
 //SHADER FOR LOW RESOLUTION
 auto vertexShaderLR = R"(#version 320 es
-in vec4 vPosition;
+layout (location = 0) in vec4 vPosition;
+layout (location = 2) in vec2 texCoord;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
+out vec2 fTexCoord;
+
 void main() {
-  gl_Position = projection * view * model * vec4(vPosition.x, vPosition.y, vPosition.z, 1.0f);
+    gl_Position = projection * view * model * vec4(vPosition.x, vPosition.y, vPosition.z, 1.0);
+    fTexCoord = vec2(texCoord.x, texCoord.y);
 }
 )";
 
@@ -20,20 +26,26 @@ auto fragmentShaderLR = R"(#version 320 es
 precision mediump float;
 out vec4 fragColor;
 
+in vec2 fTexCoord;
+
+layout (location = 0) uniform sampler2D noiseTex;
+
 vec3 RGBtoYUV(vec3 color){
-    color = color * 255.0f;
-    float y =  0.257f * color.r + 0.504f * color.g + 0.098f * color.b + 16.0f;
-    float u = -0.148f * color.r - 0.291f * color.g + 0.439f * color.b + 128.0f;
-    float v = 0.439f * color.r - 0.368f * color.g - 0.071f * color.b + 128.0f;
-    return vec3(y, u, v) * (1.0f/255.0f);
+    color = color * 255.0;
+    float y =  0.257 * color.r + 0.504 * color.g + 0.098 * color.b + 16.0;
+    float u = -0.148 * color.r - 0.291 * color.g + 0.439 * color.b + 128.0;
+    float v = 0.439 * color.r - 0.368 * color.g - 0.071 * color.b + 128.0;
+    return vec3(y, u, v) * (1.0/255.0);
 }
 
 void main() {
-   vec3 color = vec3(1.0f, 1.0f, 0.0f);
-
-    vec3 color_yuv = RGBtoYUV(color);
-    fragColor = vec4(color_yuv, 1.0f);
-    //fragColor = vec4(color, 1.0f);
+    vec3 color = vec3(1.0, 1.0, 0.0);
+    vec4 coloredTexture = texture(noiseTex, fTexCoord * 10.0);
+    vec3 color_yuv = RGBtoYUV(coloredTexture.rgb);
+    fragColor = vec4(color_yuv, 1.0);
+    //fragColor = vec4(color_yuv.r, 0.0, 0.0, 1.0);
+    //fragColor = vec4(coloredTexture.rgb, 1.0);
+    //fragColor = vec4(color, 1.0);
 }
 )";
 #endif //HELLO_GL2_SHADER_LR_H

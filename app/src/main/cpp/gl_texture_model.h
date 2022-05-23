@@ -7,7 +7,7 @@
 
 namespace GLCode{
     extern uint8_t* gl_texture_lowRes;
-    extern int* gl_texture_highRes;
+    extern uint8_t* gl_texture_highRes;
 
     extern int width_lr;
     extern int height_lr;

@@ -12,11 +12,13 @@ public class OpenGLRendererLR implements GLSurfaceView.Renderer {
 
     private final Object obj;
     private final MappedByteBuffer obj_model;
+    private final int[] noiseTexArray;
     public Handler handler;
 
-    OpenGLRendererLR(Object obj, MappedByteBuffer obj_model){
+    OpenGLRendererLR(Object obj, MappedByteBuffer obj_model, int[] noiseTexArray){
         this.obj = obj;
         this.obj_model = obj_model;
+        this.noiseTexArray = noiseTexArray;
     }
 
     @Override
@@ -36,7 +38,7 @@ public class OpenGLRendererLR implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GLES32JNILib.init(width, height, obj_model);
+        GLES32JNILib.init(width, height, obj_model, noiseTexArray);
     }
 
     @Override

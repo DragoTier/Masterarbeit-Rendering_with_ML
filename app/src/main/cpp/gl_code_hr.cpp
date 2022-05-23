@@ -51,7 +51,7 @@ bool createTextures();
 bool setupGraphicsHR(jint w, jint h) {
     width = w;
     height = h;
-
+    glEnable(GL_DEPTH_TEST);
     //highres setup
     shaderProgramHR = GLTools_HR::createProgram(vertexShaderHR, fragmentShaderHR);
     if (!shaderProgramHR) {
@@ -111,7 +111,7 @@ bool createTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,tflite::superresolution::kOutputImageWidth, tflite::superresolution::kOutputImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, GLCode::gl_texture_highRes);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8,tflite::superresolution::kOutputImageWidth, tflite::superresolution::kOutputImageHeight, 0, GL_RED, GL_UNSIGNED_BYTE, GLCode::gl_texture_highRes);
     GLTools_HR::checkGlError("glTexImage2D");
 
 

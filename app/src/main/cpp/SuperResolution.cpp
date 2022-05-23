@@ -50,7 +50,7 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
                 //nnapi_options.use_burst_computation = true;
                // nnapi_options.accelerator_name = "qti-dsp";
                 //nnapi_options.accelerator_name = "google-armnn";
-                //nnapi_options.accelerator_name = "google-edgetpu";
+                nnapi_options.accelerator_name = "google-edgetpu";
                 //nnapi_options.disallow_nnapi_cpu = true;
                 delegate_ = new StatefulNnApiDelegate(nnapi_object, nnapi_options);
                 TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
@@ -141,7 +141,7 @@ bool SuperResolution::isResponding(){
     return true;
 }
 
-int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
+uint8_t* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
 
     TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
     if (status != kTfLiteOk) {
@@ -161,7 +161,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
     // Get Y (greyscale) from clear_color_yuv
     uint8_t * input_buffer = new uint8_t[kNumberOfInputPixels * kImageChannels];
     for (int i = 0, j = 0; i < kNumberOfInputPixels; i++) {
-        input_buffer[j++] = static_cast<uint8_t>(( lr_img_rgb_int[i] >> 8) & 0xff);
+        input_buffer[j++] = static_cast<uint8_t>(( lr_img_rgb_int[i]) & 0xff);
     }
 
     // Feed input into model
@@ -182,7 +182,7 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
     // Extract the output tensor data
     const TfLiteTensor* output_tensor =
       TfLiteInterpreterGetOutputTensor(interpreter_, 0);
-    uint8_t* output_buffer = new uint8_t[kNumberOfOutputPixels * kImageChannels];
+    uint8_t * output_buffer = new uint8_t[kNumberOfOutputPixels * kImageChannels];
     status = TfLiteTensorCopyToBuffer(
       output_tensor, output_buffer,
       kOutputImageHeight * kOutputImageWidth * sizeof(uint8_t));
@@ -190,14 +190,13 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
         LOGE("Something went wrong when copying output tensor to output buffer");
         return nullptr;
     }
-
     int64_t endTime = getTimeNsec() - startTime;
     LOGI("UPSCALE TIME: %f", static_cast<float>(endTime)/1000000);
 
+
     //delete input_buffer
     delete[] input_buffer;
-
-
+/*
     // Postprocess the output from TFLite
     int clipped_output[kImageChannels];
     int* rgb_colors = new int[kNumberOfOutputPixels];
@@ -206,8 +205,6 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
         for (int j = 0; j < kImageChannels; j++) {
           clipped_output[j] = std::max<float>(0, std::min<float>(255, output_buffer[i * kImageChannels + j]));
         }
-        // When we have RGB values, we pack them into a single pixel.
-        // Alpha is set to 255.
         rgb_colors[i] = (clipped_output[0] & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 |
                         (clipped_output[0] & 0xff) |
                         (clipped_output[0] & 0xff) << 16;
@@ -216,10 +213,11 @@ int* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
 
     //delete output_buffer
     delete[] output_buffer;
-
+ */
     //LOGI("SuperResolution Time: %f ms", static_cast<float>(endTime)/1000000);
 
-    return rgb_colors;
+    //return rgb_colors;
+    return output_buffer;
 }
 
 std::unique_ptr<int[]> SuperResolution::DoSuperResolution(AHardwareBuffer** hardwareBuffer) {

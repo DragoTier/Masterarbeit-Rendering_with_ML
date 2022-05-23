@@ -37,7 +37,7 @@ class SuperResolution {
     ~SuperResolution();
     bool IsInterpreterCreated();
 
-    int* DoSuperResolution(uint8_t* lr_img_rgb);
+    uint8_t * DoSuperResolution(uint8_t* lr_img_rgb);
     std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
     bool isResponding();
 

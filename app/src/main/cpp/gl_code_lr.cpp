@@ -29,7 +29,7 @@ long super_resolution_native_handle;
 tflite::superresolution::SuperResolution* superRes = nullptr;
 
 //clear color
-float clear_color[] = {0.1f, 0.1f, 0.1f};
+float clear_color[] = {0.0f, 0.1f, 0.1f};
 std::vector<GLfloat> clear_color_yuv;
 
 //transform
@@ -39,15 +39,17 @@ GLuint shaderProgramLR;
 GLuint vPositionHandleLR;
 GLuint fbo;
 GLuint texture;
+GLuint depth_texture;
 
 //global variables
 uint8_t* gl_texture_lowRes = nullptr;
-int* gl_texture_highRes = nullptr;
+uint8_t* gl_texture_highRes = nullptr;
 int width_lr = 0;
 int height_lr = 0;
 
 //Assimp model
 AssimpModelLoader::Assimp_Model* model = nullptr;
+GLuint noise_texture;
 
 
 AHardwareBuffer* hardware_buffer = nullptr;
@@ -60,11 +62,13 @@ int64_t endTime;
 
 void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv);
 
-bool setupGraphics(int w, int h, const void* model_data, size_t model_size) {
+bool setupGraphics(int w, int h, const void* model_data, size_t model_size, const int* noise_texture_ptr) {
     printGLString("Version", GL_VERSION);
     printGLString("Vendor", GL_VENDOR);
     printGLString("Renderer", GL_RENDERER);
     printGLString("Extensions", GL_EXTENSIONS);
+
+    glEnable(GL_DEPTH_TEST);
 
     width_lr = w;
     height_lr = h;
@@ -108,7 +112,16 @@ bool setupGraphics(int w, int h, const void* model_data, size_t model_size) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+    glGenTextures(1, &depth_texture);
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width_lr, height_lr, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8,nullptr);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0);
+
     GLenum framebufferstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(framebufferstatus != GL_FRAMEBUFFER_COMPLETE){
+        LOGE("FRAMEBUFFER NOT OK");
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D,0);
@@ -128,11 +141,26 @@ bool setupGraphics(int w, int h, const void* model_data, size_t model_size) {
     glViewport(0, 0, width_lr, height_lr);
     checkGlError("glViewport");
 
+
     //prepare clear color
     RGBtoYUV(clear_color[0], clear_color[1], clear_color[2], clear_color_yuv);
 
     //assimp
     model = new AssimpModelLoader::Assimp_Model(model_data, model_size);
+
+    glGenTextures(1, &noise_texture);
+    glBindTexture(GL_TEXTURE_2D, noise_texture);
+    checkGlError("glBindTexture");
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Get Y (greyscale) from clear_color_yuv
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,350, 350, 0, GL_RGBA, GL_UNSIGNED_BYTE, noise_texture_ptr);
+    checkGlError("glTexImage2D");
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     return true;
 }
@@ -147,7 +175,7 @@ void doSuperResolution(){
     glReadPixels(0, 0, width_lr, height_lr, GL_RGBA,  GL_UNSIGNED_BYTE, pixels);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    int* srImgInt = superRes->DoSuperResolution(pixels);
+    uint8_t* srImgInt = superRes->DoSuperResolution(pixels);
     LOGI("did superresolution");
     gl_texture_lowRes = pixels;
     gl_texture_highRes = srImgInt;
@@ -177,10 +205,10 @@ void renderFrame() {
 
     startTime = getTimeNsec();
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(clear_color_yuv[0], clear_color_yuv[1], clear_color_yuv[2], 1.0f);
     checkGlError("glClearColor");
-    glClear(  GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     checkGlError("glClear");
 
     glUseProgram(shaderProgramLR);
@@ -190,14 +218,14 @@ void renderFrame() {
     checkGlError("glVertexAttribPointer");
     glEnableVertexAttribArray(vPositionHandleLR);
     checkGlError("glEnableVertexAttribArray"); */
-    rotation += 5.0f;
+    rotation += 2.0f;
     glm ::mat4 mat_model = glm::mat4(1.0f);
     mat_model = glm::rotate(mat_model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-    mat_model = glm::translate(mat_model, glm::vec3(0.0f, -0.5f, 0.0f));
+    mat_model = glm::translate(mat_model, glm::vec3(0.0f, -.7f, 0.0f));
     mat_model = glm::scale(mat_model, glm::vec3(4.0f));
     glm::mat4 mat_view = glm::mat4(1.0f);
     mat_view = glm::translate(mat_view, glm::vec3(0.0f, 0.0f, -3.0f));
-    glm::mat4 mat_proj = glm::perspective(glm::radians(45.0f), (float)width_lr/(float)height_lr, 0.1f, 100.0f);
+    glm::mat4 mat_proj = glm::perspective(glm::radians(45.0f), (float)width_lr/(float)height_lr, 0.1f, 1000.0f);
 
     unsigned int transformLoc = glGetUniformLocation(shaderProgramLR, "model");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat_model));
@@ -205,13 +233,22 @@ void renderFrame() {
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat_view));
     transformLoc = glGetUniformLocation(shaderProgramLR, "projection");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat_proj));
+
+    GLint loc = glGetUniformLocation(shaderProgramLR, "noiseTex");
+    checkGlError("glGetUniformLocation");
+    glUniform1i(loc, 0);
+    checkGlError("glUniform1i");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, noise_texture);
+
+
     //GLenum buffers[]{ GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
     //glDrawBuffers(2, buffers);
     //glDrawArrays(GL_TRIANGLES, 0, 3);
 
     model->Draw(shaderProgramLR);
     checkGlError("glDrawArrays");
-
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv){
@@ -227,17 +264,19 @@ void RGBtoYUV(float r, float g, float b, std::vector<GLfloat> &yuv){
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height, jobject model_buffer);
+    JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height, jobject model_buffer, jintArray noise_texture);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_setNativeHandle(JNIEnv * env, jclass obj, jlong native_handle);
     JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_upscaleImg(JNIEnv* env, jclass obj);
 };
 
-extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height, jobject model_buffer)
+extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_init(JNIEnv * env, jclass obj, jint width, jint height, jobject model_buffer, jintArray noise_texture)
 {
     const void *model_data = static_cast<void *>(env->GetDirectBufferAddress(model_buffer));
     jlong model_size_bytes = env->GetDirectBufferCapacity(model_buffer);
-    setupGraphics(width, height, model_data, static_cast<size_t>(model_size_bytes));
+    jint* noise_texture_pointer = env->GetIntArrayElements(noise_texture, nullptr);
+    setupGraphics(width, height, model_data, static_cast<size_t>(model_size_bytes), static_cast<int *>(noise_texture_pointer));
+    env->ReleaseIntArrayElements(noise_texture, noise_texture_pointer, 0);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_de_esolutions_masterthesis_aiupscale_GLES32JNILib_step(JNIEnv * env, jclass obj)

@@ -25,8 +25,8 @@
         android:layout_width="1080px"
         android:layout_height="2400px"
         android:visibility="visible"
-        tools:visibility="visible" />
-    -->
+        tools:visibility="visible" /> -->
+
 
     <android.opengl.GLSurfaceView
         android:id="@+id/highResView"

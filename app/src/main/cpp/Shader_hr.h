@@ -14,7 +14,7 @@ auto vertexShaderHR = R"(#version 320 es
     out vec2 fTexCoord;
 
     void main() {
-        gl_Position = vec4(pos.x, pos.y, pos.z, 1.0f);
+        gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
         fTexCoord = vec2(texcoord.x, texcoord.y);
     }
     )";
@@ -29,14 +29,14 @@ auto fragmentShaderHR = R"(#version 320 es
     uniform sampler2D highResTex;
 
     vec3 YUVtoRGB(vec3 color){
-        color = color * 255.0f;
-        float y = color.r - 16.0f;
-        float u = color.g - 128.0f;
-        float v = color.b - 128.0f;
-        float r = 1.164f * y             + 1.596f * v;
-        float g = 1.164f * y - 0.392f * u - 0.813f * v;
-        float b = 1.164f * y + 2.017f * u;
-        return vec3(r, g, b) * (1.0f/255.0f);
+        color = color * 255.0;
+        float y = color.r - 16.0;
+        float u = color.g - 128.0;
+        float v = color.b - 128.0;
+        float r = 1.164 * y             + 1.596 * v;
+        float g = 1.164 * y - 0.392 * u - 0.813 * v;
+        float b = 1.164 * y + 2.017 * u;
+        return vec3(r, g, b) * (1.0/255.0);
     }
 
     void main() {
@@ -44,11 +44,11 @@ auto fragmentShaderHR = R"(#version 320 es
         vec4 colorHR = texture(highResTex, fTexCoord);
 
         vec3 rgb = YUVtoRGB(vec3(colorHR.x, colorLR.y, colorLR.z));
-        fragColor = vec4(rgb, 1.0f);
+        fragColor = vec4(rgb, 1.0);
         //fragColor = colorLR;
-        //fragColor = colorHR;
-        //fragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-        //fragColor = vec4(fTexCoord, 0.0f, 1.0f);
+        //fragColor = vec4(colorHR.r, 0.0, 0.0, 1.0);
+        //fragColor = vec4(1.0, 1.0, 0.0, 1.0);
+        //fragColor = vec4(fTexCoord, 0.0, 1.0);
     }
     )";
 

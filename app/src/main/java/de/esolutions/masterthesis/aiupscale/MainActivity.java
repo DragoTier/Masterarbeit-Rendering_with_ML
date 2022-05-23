@@ -2,12 +2,16 @@ package de.esolutions.masterthesis.aiupscale;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.content.res.AssetFileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -21,8 +25,9 @@ public class MainActivity extends Activity {
     private GLSurfaceView viewLR;
     private GLSurfaceView viewHR;
     private static final String TAG = "SuperResolution";
-    private static final String MODEL_NAME = "model_from_h5_edge.tflite";
-    private static final String OBJ_NAME = "bunny.obj";
+    private static final String MODEL_NAME = "model_from_h5_edge_2.tflite";
+    private static final String OBJ_NAME = "bunny2.obj";
+    private static final String NOISE_TEXTURE = "noiseTexture.png";
 
     private static final int UPSCALE_FACTOR = 3;
 
@@ -42,10 +47,22 @@ public class MainActivity extends Activity {
         int tflite_accelerator = 1;
         superResolutionNativeHandle = initTFLiteInterpreter(tflite_accelerator);
         GLES32JNILib.setNativeHandle(superResolutionNativeHandle);
+
+        Bitmap noiseTexture = null;
+        try{
+            AssetManager assetManager = getAssets();
+            InputStream inputStream = assetManager.open(NOISE_TEXTURE);
+            noiseTexture = BitmapFactory.decodeStream(inputStream);
+        } catch (IOException e){
+            Log.e(TAG, "Failed to open an low resolution image");
+        }
+        int[] noiseTexArray = new int[noiseTexture.getWidth() * noiseTexture.getHeight()];
+        noiseTexture.getPixels(noiseTexArray, 0, noiseTexture.getRowBytes()/4, 0, 0, noiseTexture.getWidth(), noiseTexture.getHeight());
+
         viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
         viewLR.setEGLContextClientVersion(3);
         MappedByteBuffer obj_Model = loadFile(OBJ_NAME);
-        OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj, obj_Model);
+        OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj, obj_Model, noiseTexArray);
         //rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
         viewLR.setRenderer(rendererLR);
 
