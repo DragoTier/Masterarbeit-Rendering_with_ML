@@ -14,42 +14,40 @@
 #include <EGL/eglext.h>
 
 #define LOG_TAG "super_resolution::"
-#define LOGI(...) \
-  ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
-#define LOGE(...) \
-  ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
+#define LOGINFO(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#define LOGERROR(...) ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
 
-namespace tflite {
-namespace superresolution {
 
-const int kInputImageWidth = 360;
-const int kInputImageHeight = 640;
-const int kImageChannels = 1;
-const int kNumberOfInputPixels = kInputImageHeight * kInputImageWidth;
-const int kUpscaleFactor = 3;
-const int kOutputImageHeight = kInputImageHeight * kUpscaleFactor;
-const int kOutputImageWidth = kInputImageWidth * kUpscaleFactor;
-const int kNumberOfOutputPixels = kOutputImageHeight * kOutputImageWidth;
+namespace espcn {
+
+const int inputImageWidth = 360;
+const int inputImageHeight = 640;
+const int numberOfInputPixels = inputImageHeight * inputImageWidth;
+const int imageChannels = 1;
+const int upscaleFactor = 3;
+const int outputImageHeight = inputImageHeight * upscaleFactor;
+const int outputImageWidth = inputImageWidth * upscaleFactor;
+const int numberOfOutputPixels = outputImageHeight * outputImageWidth;
 
 class SuperResolution {
-  public:
-    SuperResolution(const void* model_data, size_t model_size, int use_accelerator);
-    ~SuperResolution();
-    bool IsInterpreterCreated();
+public:
+	SuperResolution(const void *model_data, size_t model_size, int accelerator);
 
-    uint8_t * DoSuperResolution(uint8_t* lr_img_rgb);
-    std::unique_ptr<int[]> DoSuperResolution(AHardwareBuffer** hardwareBuffer);
-    bool isResponding();
+	~SuperResolution();
 
-  private:
-    TfLiteInterpreter* interpreter_;
-    TfLiteModel* model_ = nullptr;
-    TfLiteInterpreterOptions* options_ = nullptr;
-    TfLiteDelegate* delegate_ = nullptr;
+	bool IsInterpreterInitialized();
 
+	uint8_t *DoSuperResolution(uint8_t *yuv_img);
 
+	bool isResponding();
+
+private:
+	TfLiteInterpreter *interpreter_;
+	TfLiteModel *model_ = nullptr;
+	TfLiteInterpreterOptions *options_ = nullptr;
+	TfLiteDelegate *delegate_ = nullptr;
 };
 
-}  // namespace superresolution
-}  // namespace tflite
+}  // namespace espcn
+
 #endif

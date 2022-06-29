@@ -20,7 +20,7 @@ from IPython.display import display
 assert float(tf.__version__[:3]) >= 2.3
 
 #%%
-interpreter = tf.lite.Interpreter(model_path="C:/Users/ivmu6294/AndroidApps/masterthesis_aiupscale/app/src/main/assets/model_from_h5_edge_2.tflite", num_threads=8)
+interpreter = tf.lite.Interpreter(model_path="C:/Users/ivmu6294/AndroidApps/masterthesis_aiupscale/app/src/main/assets/model_from_h5_edge.tflite", num_threads=8)
 interpreter.allocate_tensors()
 
 #Get input and output tensors.

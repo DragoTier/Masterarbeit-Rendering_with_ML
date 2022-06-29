@@ -1,7 +1,3 @@
-//
-// Created by ivmu6294 on 14.04.2022.
-//
-
 #ifndef MASTERTHESIS_AIUPSCALE_ASSIMP_MESH_H
 #define MASTERTHESIS_AIUPSCALE_ASSIMP_MESH_H
 
@@ -21,30 +17,27 @@
 
 namespace AssimpModelLoader{
 
-struct Vertex {
+struct VertexData {
     glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
+    glm::vec2 TexCoord;
 
 };
 
-struct Texture {
-    GLuint id;
-    char* type;
-};
-
+/**
+ * Class for handling each Mesh on the GPU with OpenGL
+ */
 class Assimp_Mesh {
 public:
-    std::vector<Vertex>     vertices;
-    std::vector<GLuint>     indices;
-    std::vector<Texture>    textures;
+    Assimp_Mesh(std::vector<VertexData> &vertexData, std::vector<GLuint> &indices);
+    void Draw_with_shader(GLuint &shader);
 
-    Assimp_Mesh(std::vector<Vertex> &vertices, std::vector<GLuint> &indices, std::vector<Texture> &textures);
-    void Draw(GLuint &shader);
 private:
-    GLuint VAO, VBO, EBO;
+	std::vector<VertexData> vertexData;
+	std::vector<GLuint> indices;
 
-    void setupMesh();
+    GLuint VAO;
+	GLuint VBO;
+	GLuint EBO;
 };
 } //namespace
 

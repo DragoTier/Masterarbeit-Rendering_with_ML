@@ -48,8 +48,8 @@ add_subdirectory(
 
 #GL
 add_library(gl3aiupscale SHARED
-        gl_code_lr.cpp
-        gl_code_hr.cpp
+        gl_context_lr.cpp
+        gl_context_hr.cpp
         Shader_lr.h
         Shader_hr.h
         gl_tools_lr.h
@@ -59,7 +59,7 @@ add_library(gl3aiupscale SHARED
         Assimp_Mesh.h
         Assimp_Model.cpp
         Assimp_Model.h
-        SuperResolution_jni.cpp
+        espcn_jni.cpp
         SuperResolution.cpp)
 
 target_include_directories(gl3aiupscale PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../../../../libraries/tf_test2/tensorflow_src")

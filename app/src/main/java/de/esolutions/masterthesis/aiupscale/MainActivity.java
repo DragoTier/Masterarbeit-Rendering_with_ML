@@ -15,7 +15,9 @@ import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
-
+/**
+ * Main Activity to control all components of the application
+ */
 public class MainActivity extends Activity {
 
     static {
@@ -24,53 +26,50 @@ public class MainActivity extends Activity {
 
     private GLSurfaceView viewLR;
     private GLSurfaceView viewHR;
-    private static final String TAG = "SuperResolution";
-    private static final String MODEL_NAME = "model_from_h5_edge_2.tflite";
-    private static final String OBJ_NAME = "bunny2.obj";
-    private static final String NOISE_TEXTURE = "noiseTexture.png";
+    private static final String PRINT_TAG = "SuperResolution-MainActivity";
+    private static final String MODEL_NAME = "model_from_h5_edge_4.tflite"; //ESPCN Model
+    private static final String OBJ_NAME = "bunny2.obj"; //3D Object to be rendered
+    private static final String NOISE_TEXTURE = "noiseTexture.png"; //texture
+    private static final int PERMISSION_REQUEST_CODE = 111111111;
 
-    private static final int UPSCALE_FACTOR = 3;
-
-    private MappedByteBuffer model;
     private long superResolutionNativeHandle = 0;
 
-    private static final int PERMISSION_REQUEST_CODE = 111111111;
 
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.activity_main);
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
 
-       // ImageView superResolutionImageView = (ImageView) findViewById(R.id.imageView);
-       // superResolutionImageView.setImageDrawable(null);
-        Object obj = new Object();
-        int tflite_accelerator = 1;
-        superResolutionNativeHandle = initTFLiteInterpreter(tflite_accelerator);
-        GLES32JNILib.setNativeHandle(superResolutionNativeHandle);
+        Object obj = new Object(); //for synchronization between gl threads
+        int tflite_accelerator = 1; //0 => CPU, 1 => NNAPI, 2 => GPU
+        MappedByteBuffer model = loadFile(MODEL_NAME);
+        superResolutionNativeHandle = createSuperResolutionInstance(model, tflite_accelerator);
+        OpenGLNativeWrapper.setNativeHandle(superResolutionNativeHandle);
 
+        //load texture from assets
         Bitmap noiseTexture = null;
         try{
             AssetManager assetManager = getAssets();
             InputStream inputStream = assetManager.open(NOISE_TEXTURE);
             noiseTexture = BitmapFactory.decodeStream(inputStream);
         } catch (IOException e){
-            Log.e(TAG, "Failed to open an low resolution image");
+            Log.e(PRINT_TAG, "Failed to open texture");
         }
         int[] noiseTexArray = new int[noiseTexture.getWidth() * noiseTexture.getHeight()];
         noiseTexture.getPixels(noiseTexArray, 0, noiseTexture.getRowBytes()/4, 0, 0, noiseTexture.getWidth(), noiseTexture.getHeight());
 
+        //init low res GL context
         viewLR = (GLSurfaceView) findViewById(R.id.lowResView); //new GL2JNIView(getApplication());
         viewLR.setEGLContextClientVersion(3);
         MappedByteBuffer obj_Model = loadFile(OBJ_NAME);
         OpenGLRendererLR rendererLR = new OpenGLRendererLR(obj, obj_Model, noiseTexArray);
-        //rendererLR.handler = new Handler(new HandlerCallback(SR_IMAGE_WIDTH, SR_IMAGE_HEIGHT, superResolutionImageView));;
         viewLR.setRenderer(rendererLR);
 
+        //init high res GL context
         viewHR = (GLSurfaceView) findViewById(R.id.highResView); //new GL2JNIView(getApplication());
         viewHR.setEGLContextClientVersion(3);
         OpenGLRendererHR rendererHR = new OpenGLRendererHR(obj);
         viewHR.setRenderer(rendererHR);
-        viewHR.setZOrderMediaOverlay(true);
     }
 
     @Override
@@ -83,22 +82,16 @@ public class MainActivity extends Activity {
     }
 
     private MappedByteBuffer loadFile(String file) {
-        try (AssetFileDescriptor fileDescriptor =
-                     AssetsUtil.getAssetFileDescriptorOrCached(getApplicationContext(), file);
+        try (AssetFileDescriptor fileDescriptor = AssetsUtils.getAssetFileDescriptor(getApplicationContext(), file);
              FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor())) {
             FileChannel fileChannel = inputStream.getChannel();
             long startOffset = fileDescriptor.getStartOffset();
             long declaredLength = fileDescriptor.getDeclaredLength();
             return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
         } catch (IOException e){
-            Log.e(TAG, "Fail to load file", e);
+            Log.e(PRINT_TAG, "Failed to load file", e);
             return null;
         }
-    }
-
-    private long initTFLiteInterpreter(int useAccelerator) {
-        model = loadFile(MODEL_NAME);
-        return initWithByteBufferFromJNI(model, useAccelerator);
     }
 
     @Override
@@ -116,10 +109,10 @@ public class MainActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        deinitFromJNI(superResolutionNativeHandle);
+        deleteSuperResolutionInstance(superResolutionNativeHandle);
     }
 
-    private native long initWithByteBufferFromJNI(MappedByteBuffer modelBuffer, int useAccelerator);
-    private native void deinitFromJNI(long superResolutionNativeHandle);
+    private native long createSuperResolutionInstance(MappedByteBuffer modelBuffer, int accelerator);
+    private native void deleteSuperResolutionInstance(long superResolutionNativeHandle);
 }
 

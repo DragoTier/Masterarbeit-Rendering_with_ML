@@ -1,11 +1,9 @@
-//
-// Created by ivmu6294 on 08.04.2022.
-//
 
 #ifndef HELLO_GL2_SHADER_HR_H
 #define HELLO_GL2_SHADER_HR_H
 
 //SHADER FOR HIGH RESOLUTION
+//vertex shader
 auto vertexShaderHR = R"(#version 320 es
     precision mediump float;
     layout (location = 0) in vec3 pos;
@@ -19,6 +17,7 @@ auto vertexShaderHR = R"(#version 320 es
     }
     )";
 
+//fragment shader
 auto fragmentShaderHR = R"(#version 320 es
     precision mediump float;
     out vec4 fragColor;
@@ -44,7 +43,7 @@ auto fragmentShaderHR = R"(#version 320 es
         vec4 colorHR = texture(highResTex, fTexCoord);
 
         vec3 rgb = YUVtoRGB(vec3(colorHR.x, colorLR.y, colorLR.z));
-        fragColor = vec4(rgb, 1.0);
+        fragColor = vec4(rgb * 1.0, 1.0);
         //fragColor = colorLR;
         //fragColor = vec4(colorHR.r, 0.0, 0.0, 1.0);
         //fragColor = vec4(1.0, 1.0, 0.0, 1.0);

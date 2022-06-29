@@ -1,58 +1,54 @@
-#include "SuperResolution.h"
-
-//#include <android/NeuralNetworks.h>
 #include <tensorflow/lite/nnapi/nnapi_implementation.h>
 #include <android/log.h>
 #include <cmath>
-
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <memory>
 #include <string>
-#include <vector>
 #include <tensorflow/lite/interpreter.h>
 #include <tensorflow/lite/c/c_api_internal.h>
+#include "SuperResolution.h"
 
+namespace espcn {
 
-namespace tflite {
-namespace superresolution {
-
-constexpr int kThreadNum = 12;
+constexpr int cpu_nr_of_threads = 8;
 const NnApi* nnapi_object;
-StatefulNnApiDelegate* delegate;
 
-SuperResolution::SuperResolution(const void* model_data, size_t model_size,
-                                 int use_accelerator) {
-    // Load the model
+/**
+ * Initializer for SuperResolution Class and TFLite Interpreter with chosen delegate option
+ *
+ * https://github.com/tensorflow/examples/tree/master/lite/examples/super_resolution/android
+ * https://www.tensorflow.org/lite/api_docs/cc
+ * example used for reference on basic structure as there is only little to no documentation on how to use the TFLite API with C++...
+ * Most of the documentation is obsolete as there are already new methods implemented in the API, which implement the code snippets provided in the docs and more.
+ *
+ * Also: the CmakeLists.txt for building the library that comes with the current tflite-lib has errors that need to be fixed manually.
+ */
+SuperResolution::SuperResolution(const void* model_data, size_t model_size, int accelerator) {
+
+    options_ = TfLiteInterpreterOptionsCreate();
     model_ = TfLiteModelCreate(model_data, model_size);
     if (!model_) {
-        LOGE("Failed to create TFLite model");
-    return;
+        LOGERROR("model failed");
+        return;
     }
 
-    // Create the interpreter options
-    TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
-    //options->use_nnapi = true;
-    options_ = options;
-
     // 0 => CPU, 1 => NNAPI, 2 => GPU
-    switch (use_accelerator) {
+    switch (accelerator) {
         case 0:
-            TfLiteInterpreterOptionsSetNumThreads(options_, kThreadNum);
+            TfLiteInterpreterOptionsSetNumThreads(options_, cpu_nr_of_threads);
             break;
         case 1:
             {
                 nnapi_object = NnApiImplementation();
-                StatefulNnApiDelegate::Options nnapi_options = StatefulNnApiDelegate::Options();
-                nnapi_options.execution_preference = StatefulNnApiDelegate::Options::kSustainedSpeed;
+                tflite::StatefulNnApiDelegate::Options nnapi_options = tflite::StatefulNnApiDelegate::Options();
+                nnapi_options.execution_preference = tflite::StatefulNnApiDelegate::Options::kSustainedSpeed;
                 nnapi_options.max_number_delegated_partitions = 0;
-                //nnapi_options.allow_fp16 = true;
-                //nnapi_options.use_burst_computation = true;
-               // nnapi_options.accelerator_name = "qti-dsp";
+                //nnapi_options.accelerator_name = "qti-hta";
                 //nnapi_options.accelerator_name = "google-armnn";
-                nnapi_options.accelerator_name = "google-edgetpu";
-                //nnapi_options.disallow_nnapi_cpu = true;
-                delegate_ = new StatefulNnApiDelegate(nnapi_object, nnapi_options);
+                //nnapi_options.accelerator_name = "google-edgetpu"; //<- Nur für Verwendung mit Google Pixel 6
+                delegate_ = new tflite::StatefulNnApiDelegate(nnapi_object, nnapi_options);
                 TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
                 break;
             }
@@ -60,74 +56,65 @@ SuperResolution::SuperResolution(const void* model_data, size_t model_size,
         {
             TfLiteGpuDelegateOptionsV2 default_options = TfLiteGpuDelegateOptionsV2Default();
             default_options.max_delegated_partitions = 3;
-            //default_options.inference_preference = TFLITE_GPU_INFERENCE_PREFERENCE_SUSTAINED_SPEED;
             default_options.inference_priority1 = TFLITE_GPU_INFERENCE_PRIORITY_MIN_LATENCY;
             delegate_ = TfLiteGpuDelegateV2Create(&default_options);
             TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
             break;
         }
         default:
-            TfLiteInterpreterOptionsSetNumThreads(options_, kThreadNum);
+            TfLiteInterpreterOptionsSetNumThreads(options_, cpu_nr_of_threads);
             break;
     }
 
+    //new instance with interpreter
     interpreter_ = TfLiteInterpreterCreate(model_, options_);
-    if (!interpreter_) {
-        LOGE("Failed to create TFLite interpreter");
-        return;
+    if (interpreter_) {
+        LOGINFO("interpreter initialized");
     } else {
-        LOGI("Interpreter Created");
+        LOGERROR("interpreter initialization failed");
+        return;
     }
 
     int inputCount = TfLiteInterpreterGetInputTensorCount(interpreter_);
-    LOGI("Input count %i", inputCount);
-    int inputDims[4] = {1, kInputImageHeight, kInputImageWidth, kImageChannels};
+    LOGINFO("Input count %i", inputCount);
+    int inputDims[4] = {1, inputImageHeight, inputImageWidth, imageChannels};
     const int * CONST_DIMS = inputDims;
-    LOGI("fk size %d", sizeof(CONST_DIMS));
+    LOGINFO("dims size %d", sizeof(CONST_DIMS));
     TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
     if (status != kTfLiteOk) {
-        LOGE("Something went wrong when allocating tensors");
+        LOGERROR("allocating tensors failed");
         return;
     } else {
-        LOGI("tensors allocated for default size");
+        LOGINFO("tensors allocated for default size");
     }
+    //resize input tensor once for all upcoming iterations
     status = TfLiteInterpreterResizeInputTensor(interpreter_, 0, CONST_DIMS, 4);
     if (status != kTfLiteOk) {
-        LOGE("Something went wrong when resizing tensors");
+        LOGERROR("tensor resizing failed");
         return;
     } else {
-        LOGI("tensors reszied correctly");
+        LOGINFO("tensors reszied correctly");
     }
     status = TfLiteInterpreterAllocateTensors(interpreter_);
     if (status != kTfLiteOk) {
-        LOGE("Something went wrong when allocating tensors");
+        LOGERROR("allocating tensors failed");
         return;
     } else {
-        LOGI("tensors allocated for pref size");
+        LOGINFO("tensors allocated for pref size");
     }
 }
 
 SuperResolution::~SuperResolution() {
-    // Dispose of the model and interpreter objects
-    if (interpreter_) {
-    TfLiteInterpreterDelete(interpreter_);
-    }
-    if (delegate_) {
-    //TfLiteGpuDelegateV2Delete(delegate_);
-    }
-    if (options_) {
-    TfLiteInterpreterOptionsDelete(options_);
-    }
-    if (model_) {
-    TfLiteModelDelete(model_);
-    }
+    delete interpreter_;
+    delete options_;
+    delete model_;
 }
 
-bool SuperResolution::IsInterpreterCreated() {
-    if (!interpreter_) {
-        return false;
-    } else {
+bool SuperResolution::IsInterpreterInitialized() {
+    if (interpreter_) {
         return true;
+    } else {
+        return false;
     }
 }
 
@@ -141,13 +128,17 @@ bool SuperResolution::isResponding(){
     return true;
 }
 
-uint8_t* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
+uint8_t* SuperResolution::DoSuperResolution(uint8_t* yuv_img) {
 
-    TfLiteStatus status = TfLiteInterpreterAllocateTensors(interpreter_);
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when allocating tensors");
-        return nullptr;
+    int* yuv_img_int = reinterpret_cast<int*>(yuv_img);
+    // Get Y (greyscale) from YUV
+    uint8_t * input_buffer = new uint8_t[numberOfInputPixels * imageChannels];
+    for (int i = 0; i < numberOfInputPixels; i++) {
+        input_buffer[i] = static_cast<uint8_t>(( yuv_img_int[i]) & 0xff);
     }
+
+    //need to be allocated for each iteration
+    TfLiteInterpreterAllocateTensors(interpreter_);
 
     int input = interpreter_->impl->inputs()[0];
     auto batch_size = interpreter_->impl->tensor(input)->dims->data[0];
@@ -155,149 +146,24 @@ uint8_t* SuperResolution::DoSuperResolution(uint8_t* lr_img_rgb) {
     auto width = interpreter_->impl->tensor(input)->dims->data[2];
     auto channels = interpreter_->impl->tensor(input)->dims->data[3];
 
+    //get input tensor and copy input buffer with greyscale image to the tensor
     TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter_, input);
+    TfLiteTensorCopyFromBuffer(input_tensor, input_buffer, inputImageHeight * inputImageWidth * sizeof(uint8_t));
 
-    int* lr_img_rgb_int = reinterpret_cast<int*>(lr_img_rgb);
-    // Get Y (greyscale) from clear_color_yuv
-    uint8_t * input_buffer = new uint8_t[kNumberOfInputPixels * kImageChannels];
-    for (int i = 0, j = 0; i < kNumberOfInputPixels; i++) {
-        input_buffer[j++] = static_cast<uint8_t>(( lr_img_rgb_int[i]) & 0xff);
-    }
+    //run the inference
+    TfLiteInterpreterInvoke(interpreter_);
 
-    // Feed input into model
-    int64_t startTime = getTimeNsec();
-    status = TfLiteTensorCopyFromBuffer(input_tensor, input_buffer,kInputImageHeight * kInputImageWidth * sizeof(uint8_t));
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when copying input buffer to input tensor");
-        return nullptr;
-    }
+    //copy the upscaled image from the output tensor to the output buffer
+    const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter_, 0);
+    uint8_t * output_buffer = new uint8_t[numberOfOutputPixels * imageChannels];
+    TfLiteTensorCopyToBuffer(output_tensor, output_buffer,outputImageHeight * outputImageWidth * sizeof(uint8_t));
 
-    // Run the interpreter
-    status = TfLiteInterpreterInvoke(interpreter_);
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when running the TFLite model");
-        return nullptr;
-    }
-
-    // Extract the output tensor data
-    const TfLiteTensor* output_tensor =
-      TfLiteInterpreterGetOutputTensor(interpreter_, 0);
-    uint8_t * output_buffer = new uint8_t[kNumberOfOutputPixels * kImageChannels];
-    status = TfLiteTensorCopyToBuffer(
-      output_tensor, output_buffer,
-      kOutputImageHeight * kOutputImageWidth * sizeof(uint8_t));
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when copying output tensor to output buffer");
-        return nullptr;
-    }
-    int64_t endTime = getTimeNsec() - startTime;
-    LOGI("UPSCALE TIME: %f", static_cast<float>(endTime)/1000000);
-
-
-    //delete input_buffer
+    //delete the input_buffer because image is already processed by now
     delete[] input_buffer;
-/*
-    // Postprocess the output from TFLite
-    int clipped_output[kImageChannels];
-    int* rgb_colors = new int[kNumberOfOutputPixels];
 
-    for (int i = 0; i < kNumberOfOutputPixels; i++) {
-        for (int j = 0; j < kImageChannels; j++) {
-          clipped_output[j] = std::max<float>(0, std::min<float>(255, output_buffer[i * kImageChannels + j]));
-        }
-        rgb_colors[i] = (clipped_output[0] & 0xff) << 24 | (clipped_output[0] & 0xff) << 8 |
-                        (clipped_output[0] & 0xff) |
-                        (clipped_output[0] & 0xff) << 16;
-        //LOGI("color value: %d", rgb_colors[i]);,
-    }
-
-    //delete output_buffer
-    delete[] output_buffer;
- */
-    //LOGI("SuperResolution Time: %f ms", static_cast<float>(endTime)/1000000);
-
-    //return rgb_colors;
     return output_buffer;
 }
 
-std::unique_ptr<int[]> SuperResolution::DoSuperResolution(AHardwareBuffer** hardwareBuffer) {
 
+}  // namespace espcn
 
-    ANeuralNetworksMemory* mem = nullptr;
-    nnapi_object->ANeuralNetworksMemory_createFromAHardwareBuffer(*hardwareBuffer, &mem);
-
-    struct MemoryContext {
-        ANeuralNetworksMemory* memory_handle;
-        void* memory_data;
-        size_t byte_size;
-    };
-
-    MemoryContext memory_context = {mem, hardwareBuffer,0};
-
-    StatefulNnApiDelegate::CopyToHostTensorFnPtr callback_CopyToHostTensorFnPtr =
-        [](TfLiteTensor* tensor, ANeuralNetworksMemory* memory, size_t memory_offset, size_t byte_size, void* callback_context) -> TfLiteStatus {
-
-        auto memory_context = reinterpret_cast<MemoryContext*>(callback_context);
-        if (memory != memory_context->memory_handle || memory_offset + byte_size > memory_context->byte_size) {
-        //    return kTfLiteError;
-        }
-        tensor->bytes = 0;
-        //memory_context->memory_data
-
-
-       // memcpy(tensor->data.raw, reinterpret_cast<uint8_t*>(memory_context->memory_data) + memory_offset,byte_size);
-        return kTfLiteOk;
-    };
-
-    TfLiteBufferHandle bufferHandle = delegate->RegisterNnapiMemory(mem, callback_CopyToHostTensorFnPtr, &memory_context);
-
-    // Create the interpreter
-    interpreter_ = TfLiteInterpreterCreate(model_, options_);
-
-    if (!interpreter_) {
-        LOGE("Failed to create TFLite interpreter");
-        return nullptr;
-    }
-
-    interpreter_->impl->SetBufferHandle(0, bufferHandle, delegate_); //index 0 = Input Tensor
-    interpreter_->impl->tensor(0)->data_is_stale = true;
-    TfLiteTensor* tensor = TfLiteInterpreterGetInputTensor(interpreter_, 0);
-
-    TfLiteStatus status = TfLiteInterpreterInvoke(interpreter_);
-
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when running the TFLite model");
-        return nullptr;
-    }
-
-    // Extract the output tensor data
-    const TfLiteTensor* output_tensor =
-            TfLiteInterpreterGetOutputTensor(interpreter_, 0);
-    float output_buffer[kNumberOfOutputPixels * kImageChannels];
-
-    status = TfLiteTensorCopyToBuffer(
-            output_tensor, output_buffer,
-            kNumberOfOutputPixels * kImageChannels * sizeof(float));
-    if (status != kTfLiteOk) {
-        LOGE("Something went wrong when copying output tensor to output buffer");
-        return nullptr;
-    }
-    //LOGI("Time: %ld", endTime);
-    // Postprocess the output from TFLite
-    int clipped_output;
-    auto rgb_colors = std::make_unique<int[]>(kNumberOfOutputPixels);
-    for (int i = 0; i < kNumberOfOutputPixels; i++) {
-        clipped_output = std::max<float>(0, std::min<float>(255, output_buffer[i]));
-        // When we have RGB values, we pack them into a single pixel.
-        // Alpha is set to 255.
-        rgb_colors[i] = (255u & 0xff) << 24 | (clipped_output & 0xff) << 16 |
-                        (clipped_output & 0xff) << 8 |
-                        (clipped_output & 0xff);
-    }
-
-
-    return rgb_colors;
-}
-
-}  // namespace superresolution
-}  // namespace tflite

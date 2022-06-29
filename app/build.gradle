@@ -14,7 +14,7 @@ android {
             cmake {
                 // Available arguments are inside ${SDK}/cmake/.../android.toolchain.cmake file
                 version "3.18.1"
-                arguments '-DANDROID_STL=c++_static', '-DASSIMP_ANDROID_JNIIOSYSTEM=ON','-DASSIMP_INJECT_DEBUG_POSTFIX=OFF', '-DCMAKE_TOOLCHAIN_FILE=C:/Users/ivmu6294/AppData/Local/Android/Sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake'
+                arguments '-DANDROID_STL=c++_static', '-DASSIMP_ANDROID_JNIIOSYSTEM=ON','-DASSIMP_INJECT_DEBUG_POSTFIX=OFF', '-DCMAKE_TOOLCHAIN_FILE=C:/Users/Ivo/AppData/Local/Android/Sdk/ndk/23.1.7779620/build/cmake/android.toolchain.cmake'
                 //arguments '-GAndroid Gradle - Ninja'
                 //path 'src/main/cpp/CMakeLists.txt'
             }
